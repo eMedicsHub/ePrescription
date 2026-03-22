@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                  String         @id @default(cuid())
+  email               String         @unique
+  password            String
+  name                String
+  role                Role
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  patientProfile      Patient?
+  doctorPrescriptions Prescription[] @relation("DoctorPrescriptions")
+  doctorConsents      Consent[]      @relation("DoctorConsents")
+}
+
+model Patient {
+  id            String         @id @default(cuid())
+  userId        String         @unique
+  dob           DateTime
+  address       String
+  phone         String
+  user          User           @relation(fields: [userId], references: [id])
+  prescriptions Prescription[] @relation("PatientPrescriptions")
+  consents      Consent[]      @relation("PatientConsents")
+}
+
+model Prescription {
+  id          String             @id @default(cuid())
+  patientId   String
+  doctorId    String
+  status      PrescriptionStatus @default(PENDING)
+  notes       String?
+  expiresAt   DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  medications Medication[]
+  doctor      User               @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
+  patient     Patient            @relation("PatientPrescriptions", fields: [patientId], references: [id])
+}
+
+model Medication {
+  id             String       @id @default(cuid())
+  prescriptionId String
+  name           String
+  dosage         String
+  frequency      String
+  duration       String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+}
+
+enum Role {
+  SUPER_ADMIN   // can manage other admins and has all admin privileges
+  ADMIN         // regular administrator, can add medicines
+  DOCTOR
+  PHARMACIST
+  PATIENT
+}
+
+enum PrescriptionStatus {
+  PENDING
+  DISPENSED
+  CANCELLED
+  EXPIRED
+}
+
+model Medicine {
+  id   String @id @default(cuid())
+  name String @unique
+}
+
+model Consent {
+  id        String   @id @default(cuid())
+  patientId String
+  doctorId  String
+  createdAt DateTime @default(now())
+  
+  patient   Patient  @relation("PatientConsents", fields: [patientId], references: [id])
+  doctor    User     @relation("DoctorConsents", fields: [doctorId], references: [id])
+
+  @@unique([patientId, doctorId])
+}
