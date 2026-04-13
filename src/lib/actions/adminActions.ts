@@ -24,7 +24,7 @@ export async function createAdminUser(formData: FormData) {
     try {
         const hashedPassword = await bcrypt.hash(password, 10)
 
-        const admin = await prisma.user.create({
+        const admin = await prisma.admin.create({
             data: {
                 email: email.trim().toLowerCase(),
                 name: name.trim(),

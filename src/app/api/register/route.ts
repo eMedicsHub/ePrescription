@@ -22,12 +22,15 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Invalid role" }, { status: 400 });
         }
 
-        const existingUser = await prisma.user.findUnique({
-            where: { email: normalizedEmail }
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                email: normalizedEmail,
+                role,
+            }
         });
 
         if (existingUser) {
-            return NextResponse.json({ error: "Email already exists" }, { status: 400 });
+            return NextResponse.json({ error: `An account already exists for this ${role.toLowerCase()} account.` }, { status: 400 });
         }
 
         const hashedPassword = await bcrypt.hash(password, 12);
@@ -42,6 +45,7 @@ export async function POST(req: Request) {
                 ...(role === "PATIENT" && {
                     patientProfile: {
                         create: {
+                            universalId: `EPID${Date.now()}${Math.random().toString(36).substr(2, 9)}`,
                             dob: new Date(),
                             address: "",
                             phone: ""

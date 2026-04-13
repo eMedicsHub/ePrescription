@@ -8,7 +8,7 @@ export default async function PatientDashboard() {
     const session = await getServerSession(authOptions);
 
     if (!session || (session.user as any).role !== "PATIENT") {
-        redirect("/login");
+        redirect("/mypa/login");
     }
 
     return (

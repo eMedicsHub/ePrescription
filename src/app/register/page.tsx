@@ -29,7 +29,12 @@ export default function RegisterPage() {
             });
 
             if (res.ok) {
-                router.push("/login?registered=true");
+                const portalLoginMap: Record<string, string> = {
+                    PATIENT: "/mypa/login?registered=true",
+                    DOCTOR: "/mydp/login?registered=true",
+                    PHARMACIST: "/myph/login?registered=true",
+                };
+                router.push(portalLoginMap[formData.role] || "/login?registered=true");
             } else {
                 const data = await res.json();
                 setError(data.error || "Something went wrong");
@@ -45,7 +50,20 @@ export default function RegisterPage() {
         setLoading(true);
         setError("");
         try {
-            await signIn("google", { callbackUrl: "/dashboard" });
+            const googleProviderByRole: Record<string, "google-patient" | "google-doctor" | "google-pharmacist"> = {
+                PATIENT: "google-patient",
+                DOCTOR: "google-doctor",
+                PHARMACIST: "google-pharmacist",
+            };
+            const callbackByRole: Record<string, string> = {
+                PATIENT: "/dashboard/patient",
+                DOCTOR: "/dashboard/doctor",
+                PHARMACIST: "/dashboard/pharmacist",
+            };
+            const provider = googleProviderByRole[formData.role] || "google-patient";
+            const callbackUrl = callbackByRole[formData.role] || "/dashboard/patient";
+
+            await signIn(provider, { callbackUrl });
         } catch {
             setError("Google sign-in failed");
             setLoading(false);

@@ -72,7 +72,11 @@ export async function GET(req: Request) {
                 }
             });
 
-            if (!hasConsent) {
+            const consentIsActive = hasConsent
+                && (!hasConsent.status || hasConsent.status === "ACTIVE")
+                && (!hasConsent.expiresAt || new Date(hasConsent.expiresAt) >= new Date());
+
+            if (!consentIsActive) {
                 // If no consent, force doctorId to the calling user to only show their own records
                 // instead of all records for that patient.
                 doctorVisibilityCondition = { doctorId: userId };

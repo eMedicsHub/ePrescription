@@ -7,6 +7,19 @@ export default function PatientDashboardClient() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [selectedPrescription, setSelectedPrescription] = useState<any>(null);
+    const [records, setRecords] = useState<any[]>([]);
+    const [timeline, setTimeline] = useState<any[]>([]);
+    const [analytics, setAnalytics] = useState<any | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [uploadError, setUploadError] = useState("");
+    const [recordForm, setRecordForm] = useState({
+        title: "",
+        description: "",
+        category: "LAB_REPORT",
+        tags: "",
+        amount: "",
+    });
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     // Consent management state
     const [consents, setConsents] = useState<any[]>([]);
@@ -14,12 +27,52 @@ export default function PatientDashboardClient() {
     const [searchDoctorQuery, setSearchDoctorQuery] = useState("");
     const [isSearchingDoctors, setIsSearchingDoctors] = useState(false);
     const [grantingConsentId, setGrantingConsentId] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'prescriptions' | 'access'>('prescriptions');
+    const [consentDurationDays, setConsentDurationDays] = useState<number>(30);
+    const [activeTab, setActiveTab] = useState<'prescriptions' | 'records' | 'timeline' | 'analytics' | 'access'>('timeline');
 
     useEffect(() => {
         fetchPrescriptions();
         fetchConsents();
+        fetchRecords();
+        fetchTimeline();
+        fetchAnalytics();
     }, []);
+
+    const fetchRecords = async () => {
+        try {
+            const res = await fetch("/api/patient/records");
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                setRecords(data);
+            }
+        } catch (err) {
+            console.error("Failed to load records", err);
+        }
+    };
+
+    const fetchTimeline = async () => {
+        try {
+            const res = await fetch("/api/patient/timeline");
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                setTimeline(data);
+            }
+        } catch (err) {
+            console.error("Failed to load timeline", err);
+        }
+    };
+
+    const fetchAnalytics = async () => {
+        try {
+            const res = await fetch("/api/patient/analytics");
+            const data = await res.json();
+            if (res.ok) {
+                setAnalytics(data);
+            }
+        } catch (err) {
+            console.error("Failed to load analytics", err);
+        }
+    };
 
     const fetchConsents = async () => {
         try {
@@ -69,7 +122,7 @@ export default function PatientDashboardClient() {
             const res = await fetch("/api/consents", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ doctorId })
+                body: JSON.stringify({ doctorId, durationDays: consentDurationDays })
             });
 
             if (res.ok) {
@@ -118,6 +171,52 @@ export default function PatientDashboardClient() {
         }
     };
 
+    const handleRecordSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setUploading(true);
+        setUploadError("");
+
+        try {
+            const formData = new FormData();
+            formData.append("title", recordForm.title);
+            formData.append("description", recordForm.description);
+            formData.append("category", recordForm.category);
+            formData.append("tags", recordForm.tags);
+            if (recordForm.amount) {
+                formData.append("amount", recordForm.amount);
+            }
+            if (selectedFile) {
+                formData.append("file", selectedFile);
+            }
+
+            const res = await fetch("/api/patient/records", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                setUploadError(data.error || "Failed to save record");
+                return;
+            }
+
+            setRecordForm({
+                title: "",
+                description: "",
+                category: "LAB_REPORT",
+                tags: "",
+                amount: "",
+            });
+            setSelectedFile(null);
+            await Promise.all([fetchRecords(), fetchTimeline(), fetchAnalytics()]);
+        } catch (err) {
+            console.error(err);
+            setUploadError("Failed to save record");
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleLogout = () => {
         window.location.href = '/api/auth/signout';
     };
@@ -130,6 +229,24 @@ export default function PatientDashboardClient() {
                     onClick={() => setActiveTab('prescriptions')}
                 >
                     My Prescriptions
+                </button>
+                <button
+                    className={`sidebar-tab ${activeTab === 'records' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('records')}
+                >
+                    My Records
+                </button>
+                <button
+                    className={`sidebar-tab ${activeTab === 'timeline' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('timeline')}
+                >
+                    Health Timeline
+                </button>
+                <button
+                    className={`sidebar-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('analytics')}
+                >
+                    Insights
                 </button>
                 <button
                     className={`sidebar-tab ${activeTab === 'access' ? 'active' : ''}`}
@@ -150,6 +267,27 @@ export default function PatientDashboardClient() {
 
                 {activeTab === 'prescriptions' && (
                     <div className="card">
+                        {analytics && (
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                                    <p className="text-xs text-slate-500 uppercase tracking-wide">Prescriptions</p>
+                                    <p className="text-2xl font-bold text-slate-900 mt-1">{analytics.prescriptionCount}</p>
+                                </div>
+                                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                                    <p className="text-xs text-slate-500 uppercase tracking-wide">Records</p>
+                                    <p className="text-2xl font-bold text-slate-900 mt-1">{records.length}</p>
+                                </div>
+                                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                                    <p className="text-xs text-slate-500 uppercase tracking-wide">Doctors Linked</p>
+                                    <p className="text-2xl font-bold text-slate-900 mt-1">{analytics.activeDoctorCount}</p>
+                                </div>
+                                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                                    <p className="text-xs text-slate-500 uppercase tracking-wide">Expiring Soon</p>
+                                    <p className="text-2xl font-bold text-slate-900 mt-1">{analytics.expiringSoon}</p>
+                                </div>
+                            </div>
+                        )}
+
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
                             <h3 style={{ margin: 0 }}>My Prescriptions (Last 5)</h3>
                         </div>
@@ -209,6 +347,130 @@ export default function PatientDashboardClient() {
                     </div>
                 )}
 
+                {activeTab === 'records' && (
+                    <div className="card">
+                        <h3 className="mb-4">My Health Records</h3>
+                        <p className="text-sm text-muted mb-6">Upload reports, consultation notes, medical bills, or other records. Files are stored securely and added to your timeline.</p>
+
+                        <form onSubmit={handleRecordSubmit} className="space-y-4">
+                            {uploadError && <div className="error-message">{uploadError}</div>}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="input-group">
+                                    <label>Title</label>
+                                    <input value={recordForm.title} onChange={(e) => setRecordForm((current) => ({ ...current, title: e.target.value }))} required />
+                                </div>
+                                <div className="input-group">
+                                    <label>Category</label>
+                                    <select value={recordForm.category} onChange={(e) => setRecordForm((current) => ({ ...current, category: e.target.value }))}>
+                                        <option value="LAB_REPORT">Lab Report</option>
+                                        <option value="IMAGING">Imaging</option>
+                                        <option value="CONSULTATION_NOTE">Consultation Note</option>
+                                        <option value="DISCHARGE_SUMMARY">Discharge Summary</option>
+                                        <option value="MEDICAL_BILL">Medical Bill</option>
+                                        <option value="OTHER">Other</option>
+                                    </select>
+                                </div>
+                                <div className="input-group">
+                                    <label>Tags</label>
+                                    <input value={recordForm.tags} onChange={(e) => setRecordForm((current) => ({ ...current, tags: e.target.value }))} placeholder="cardiology, annual-checkup" />
+                                </div>
+                                <div className="input-group">
+                                    <label>Bill Amount</label>
+                                    <input value={recordForm.amount} onChange={(e) => setRecordForm((current) => ({ ...current, amount: e.target.value }))} placeholder="Optional, for bills only" />
+                                </div>
+                            </div>
+
+                            <div className="input-group">
+                                <label>Description</label>
+                                <textarea value={recordForm.description} onChange={(e) => setRecordForm((current) => ({ ...current, description: e.target.value }))} rows={3} />
+                            </div>
+
+                            <div className="input-group">
+                                <label>File</label>
+                                <input type="file" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
+                            </div>
+
+                            <button type="submit" className="btn btn-primary" disabled={uploading}>
+                                {uploading ? "Saving Record..." : "Save Record"}
+                            </button>
+                        </form>
+
+                        <div className="mt-6" style={{ display: "grid", gap: "1rem" }}>
+                            {records.map((record) => (
+                                <div key={record.id} className="list-item">
+                                    <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "flex-start" }}>
+                                        <div>
+                                            <p style={{ margin: 0, fontWeight: 600 }}>{record.title}</p>
+                                            <p className="text-sm text-muted" style={{ marginTop: "0.25rem" }}>
+                                                {record.category.replaceAll("_", " ")} • {new Date(record.occurredAt).toLocaleDateString()} • {record.sourcePortal === 'DOCTOR' ? `Added by Dr. ${record.doctor?.name || record.createdBy?.name}` : 'Added by you'}
+                                            </p>
+                                            {record.description && <p className="text-sm mt-2">{record.description}</p>}
+                                        </div>
+                                        {record.storagePath && (
+                                            <a href={`/api/patient/records/${record.id}/download`} className="text-sm font-semibold" target="_blank" rel="noreferrer">
+                                                Open File
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'timeline' && (
+                    <div className="card">
+                        <h3 className="mb-4">Health Timeline</h3>
+                        <div style={{ display: "grid", gap: "1rem" }}>
+                            {timeline.map((entry) => (
+                                <div key={entry.id} className="list-item">
+                                    <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "flex-start" }}>
+                                        <div>
+                                            <p style={{ margin: 0, fontWeight: 600 }}>{entry.title}</p>
+                                            <p className="text-sm text-muted" style={{ marginTop: "0.25rem" }}>{entry.summary}</p>
+                                        </div>
+                                        <span className="text-sm text-muted">{new Date(entry.occurredAt).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            ))}
+                            {timeline.length === 0 && <p className="text-muted">Your timeline is empty.</p>}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'analytics' && (
+                    <div className="card">
+                        <h3 className="mb-4">Insights</h3>
+                        {!analytics ? (
+                            <p className="text-muted">Loading analytics...</p>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                                    <h4 className="mb-2">Prescription Status</h4>
+                                    {Object.entries(analytics.statusCounts || {}).map(([status, count]) => (
+                                        <p key={status} className="text-sm text-slate-700">{status}: {String(count)}</p>
+                                    ))}
+                                </div>
+                                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                                    <h4 className="mb-2">Record Categories</h4>
+                                    {Object.entries(analytics.categoryCounts || {}).map(([category, count]) => (
+                                        <p key={category} className="text-sm text-slate-700">{category.replaceAll('_', ' ')}: {String(count)}</p>
+                                    ))}
+                                </div>
+                                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                                    <h4 className="mb-2">Medical Bills</h4>
+                                    <p className="text-2xl font-bold text-slate-900">${Number(analytics.totalMedicalBills || 0).toFixed(2)}</p>
+                                </div>
+                                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                                    <h4 className="mb-2">Active Doctor Connections</h4>
+                                    <p className="text-2xl font-bold text-slate-900">{analytics.activeDoctorCount}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* Consent Management Section */}
                 {activeTab === 'access' && (
                     <div className="card">
@@ -231,6 +493,11 @@ export default function PatientDashboardClient() {
                                                 <div>
                                                     <p className="font-medium text-sm text-gray-800">{consent.doctor.name}</p>
                                                     <p className="text-xs text-gray-500">{consent.doctor.email}</p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {consent.expiresAt
+                                                            ? `Access expires ${new Date(consent.expiresAt).toLocaleDateString()}`
+                                                            : "No expiry"}
+                                                    </p>
                                                 </div>
                                                 <button
                                                     onClick={() => revokeConsent(consent.id)}
@@ -247,6 +514,18 @@ export default function PatientDashboardClient() {
                             {/* Search and Grant */}
                             <div>
                                 <h4 className="mb-4">Grant Access</h4>
+                                <div className="input-group" style={{ marginBottom: "0.75rem" }}>
+                                    <label>Access Duration</label>
+                                    <select
+                                        value={consentDurationDays}
+                                        onChange={(e) => setConsentDurationDays(Number(e.target.value))}
+                                    >
+                                        <option value={7}>7 days</option>
+                                        <option value={30}>30 days</option>
+                                        <option value={90}>90 days</option>
+                                        <option value={180}>180 days</option>
+                                    </select>
+                                </div>
                                 <div className="relative">
                                     <input
                                         type="text"

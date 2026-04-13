@@ -31,6 +31,12 @@ export default function AdminDashboard() {
     const [pendingError, setPendingError] = useState<string | null>(null)
     const [approvingId, setApprovingId] = useState<string | null>(null)
 
+    // Admin users list
+    const [adminUsers, setAdminUsers] = useState<Array<{ id: string; name: string; email: string; role: 'ADMIN' | 'SUPER_ADMIN'; createdAt: string }>>([])
+    const [adminsLoading, setAdminsLoading] = useState(true)
+    const [adminsError, setAdminsError] = useState<string | null>(null)
+    const [updatingAdminId, setUpdatingAdminId] = useState<string | null>(null)
+
     const { data: session } = useSession()
     const role = (session?.user as any)?.role
 
@@ -60,8 +66,68 @@ export default function AdminDashboard() {
     useEffect(() => {
         if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
             loadPendingRegistrations()
+            loadAdminUsers()
         }
     }, [role])
+
+    async function loadAdminUsers() {
+        setAdminsLoading(true)
+        setAdminsError(null)
+        try {
+            const res = await fetch('/api/admin/users', { cache: 'no-store' })
+            const data = await res.json()
+            if (!res.ok) {
+                setAdminsError(data.error || 'Failed to load admin users')
+                setAdminUsers([])
+            } else {
+                setAdminUsers(data.admins || [])
+            }
+        } catch {
+            setAdminsError('Failed to load admin users')
+            setAdminUsers([])
+        } finally {
+            setAdminsLoading(false)
+        }
+    }
+
+    async function handleChangeAdminRole(userId: string, newRole: 'ADMIN' | 'SUPER_ADMIN') {
+        setUpdatingAdminId(userId)
+        try {
+            const res = await fetch(`/api/admin/users/${userId}/role`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: newRole }),
+            })
+            const data = await res.json()
+            if (!res.ok) {
+                alert(data.error || 'Failed to update role')
+            } else {
+                setAdminUsers((cur) => cur.map((u) => (u.id === userId ? { ...u, role: newRole } : u)))
+            }
+        } catch {
+            alert('Failed to update role')
+        } finally {
+            setUpdatingAdminId(null)
+        }
+    }
+
+    async function handleDeleteAdmin(userId: string) {
+        if (!confirm('Delete this admin account? This cannot be undone.')) return
+        setUpdatingAdminId(userId)
+        try {
+            const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' })
+            const data = await res.json()
+            if (!res.ok) {
+                alert(data.error || 'Failed to delete admin')
+            } else {
+                setAdminUsers((cur) => cur.filter((u) => u.id !== userId))
+            }
+        } catch {
+            alert('Failed to delete admin')
+        } finally {
+            setUpdatingAdminId(null)
+        }
+    }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
@@ -334,6 +400,84 @@ export default function AdminDashboard() {
                     )}
                 </div>
 
+                <section className="mt-8 bg-white shadow-xl shadow-slate-200/50 rounded-2xl p-8 border border-slate-100">
+                    <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800">Administrators</h2>
+                            <p className="text-sm text-slate-500 mt-1">List of admin users (ADMIN and SUPER_ADMIN).</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={loadAdminUsers}
+                            className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition-colors"
+                            disabled={adminsLoading}
+                        >
+                            Refresh
+                        </button>
+                    </div>
+
+                    {adminsError && (
+                        <div className="mb-4 p-4 flex items-start gap-3 rounded-xl text-sm font-medium bg-rose-50 text-rose-800 border border-rose-200/50">
+                            <AlertCircle className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" />
+                            <p>{adminsError}</p>
+                        </div>
+                    )}
+
+                    {adminsLoading ? (
+                        <div className="py-6 text-center text-slate-500">Loading administrators…</div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="text-sm text-slate-500 border-b">
+                                        <th className="py-3">Name</th>
+                                        <th className="py-3">Email</th>
+                                        <th className="py-3">Role</th>
+                                        <th className="py-3">Joined</th>
+                                        <th className="py-3">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-sm text-slate-700">
+                                    {adminUsers.map((u) => (
+                                        <tr key={u.id} className="border-b last:border-b-0">
+                                            <td className="py-3">{u.name}</td>
+                                            <td className="py-3">{u.email}</td>
+                                            <td className="py-3 font-semibold">{u.role}</td>
+                                            <td className="py-3">{new Date(u.createdAt).toLocaleString()}</td>
+                                            <td className="py-3">
+                                                {role === 'SUPER_ADMIN' ? (
+                                                    <div className="flex items-center gap-2">
+                                                        {u.role === 'ADMIN' ? (
+                                                            <button
+                                                                onClick={() => handleChangeAdminRole(u.id, 'SUPER_ADMIN')}
+                                                                disabled={updatingAdminId === u.id}
+                                                                className="px-3 py-1 rounded-md bg-amber-500 text-white text-sm"
+                                                            >Promote</button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleChangeAdminRole(u.id, 'ADMIN')}
+                                                                disabled={updatingAdminId === u.id}
+                                                                className="px-3 py-1 rounded-md bg-slate-300 text-slate-800 text-sm"
+                                                            >Demote</button>
+                                                        )}
+
+                                                        <button
+                                                            onClick={() => handleDeleteAdmin(u.id)}
+                                                            disabled={updatingAdminId === u.id}
+                                                            className="px-3 py-1 rounded-md bg-rose-500 text-white text-sm"
+                                                        >Delete</button>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-sm text-slate-500">—</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </section>
                 <section className="mt-8 bg-white shadow-xl shadow-slate-200/50 rounded-2xl p-8 border border-slate-100">
                     <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
                         <div>

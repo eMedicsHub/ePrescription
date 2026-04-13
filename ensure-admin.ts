@@ -5,34 +5,38 @@ import * as dotenv from 'dotenv'
 
 dotenv.config()
 
+const rawSchema = process.env.TENANT_ID || 'public'
+const dbSchema = rawSchema.toLowerCase().replace(/[^a-z0-9_]/g, '_')
+
 const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL,
 })
 
-pool.on('connect', (client) => {
-    client.query('SET search_path TO eprescription')
+pool.on('connect', async (client) => {
+    await client.query(`CREATE SCHEMA IF NOT EXISTS "${dbSchema}"`)
+    await client.query(`SET search_path TO "${dbSchema}"`)
 })
 
-const adapter = new PrismaPg(pool, { schema: 'eprescription' })
+const adapter = new PrismaPg(pool, { schema: dbSchema })
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
     const email = 'admin@example.com'
     const name = 'Admin User'
 
-    // Check if user exists first to decide whether to create or update
-    const existingUser = await prisma.user.findUnique({
+    // Check if an admin exists first
+    const existingAdmin = await prisma.admin.findFirst({
         where: { email }
     })
 
-    if (existingUser) {
-        const admin = await prisma.user.update({
-            where: { email },
+    if (existingAdmin) {
+        const admin = await prisma.admin.update({
+            where: { id: existingAdmin.id },
             data: { role: 'ADMIN', isApproved: true },
         })
-        console.log('User promoted to ADMIN:', admin)
+        console.log('Admin promoted/updated:', admin)
     } else {
-        const admin = await prisma.user.create({
+        const admin = await prisma.admin.create({
             data: {
                 email,
                 name,

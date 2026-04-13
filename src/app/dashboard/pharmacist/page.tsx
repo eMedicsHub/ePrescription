@@ -8,7 +8,7 @@ export default async function PharmacistDashboard() {
     const session = await getServerSession(authOptions);
 
     if (!session || (session.user as any).role !== "PHARMACIST") {
-        redirect("/login");
+        redirect("/myph/login");
     }
 
     return (

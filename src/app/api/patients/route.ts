@@ -93,8 +93,11 @@ export async function POST(req: Request) {
         }
 
         // Before proceeding, ensure email doesn't collide
-        const existingEmail = await prisma.user.findUnique({
-            where: { email: emailValue }
+        const existingEmail = await prisma.user.findFirst({
+            where: {
+                email: emailValue.toLowerCase(),
+                role: "PATIENT"
+            }
         });
 
         if (existingEmail && !isSyntheticEmail) {
@@ -113,7 +116,7 @@ export async function POST(req: Request) {
             const user = await tx.user.create({
                 data: {
                     name: name.trim(),
-                    email: emailValue,
+                    email: emailValue.toLowerCase(),
                     password: randomPassword, // In a real app, you'd hash this, but they won't use it directly here
                     role: "PATIENT",
                     isApproved: true,
@@ -123,6 +126,7 @@ export async function POST(req: Request) {
             const patient = await tx.patient.create({
                 data: {
                     userId: user.id,
+                    universalId: `EPID${Date.now()}${Math.random().toString(36).substr(2, 9)}`,
                     dob: new Date(dob),
                     phone: phoneValue,
                     address: "", // Address missing from requirements, defaulting to empty

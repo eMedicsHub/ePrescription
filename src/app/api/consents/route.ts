@@ -3,6 +3,20 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
+function computeExpiry(days?: number) {
+    if (!days || Number.isNaN(days) || days <= 0) {
+        return null;
+    }
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + days);
+    return expiresAt;
+}
+
+function isExpired(consent: any) {
+    return consent.expiresAt && new Date(consent.expiresAt) < new Date();
+}
+
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
 
@@ -23,7 +37,7 @@ export async function GET(req: Request) {
 
         if (!patient) return NextResponse.json({ error: "Patient not found" }, { status: 404 });
 
-        const consents = await (prisma as any).consent.findMany({
+        const rawConsents = await (prisma as any).consent.findMany({
             where: {
                 patientId: patient.id
             },
@@ -40,6 +54,27 @@ export async function GET(req: Request) {
                 createdAt: 'desc'
             }
         });
+
+        const expiredIds = rawConsents
+            .filter((consent: any) => consent.status === "ACTIVE" && isExpired(consent))
+            .map((consent: any) => consent.id);
+
+        if (expiredIds.length > 0) {
+            await (prisma as any).consent.updateMany({
+                where: { id: { in: expiredIds } },
+                data: { status: "EXPIRED" },
+            });
+        }
+
+        const consents = rawConsents
+            .map((consent: any) => {
+                if (expiredIds.includes(consent.id)) {
+                    return { ...consent, status: "EXPIRED" };
+                }
+
+                return consent;
+            })
+            .filter((consent: any) => consent.status === "ACTIVE");
 
         return NextResponse.json(consents);
     } catch (error) {
@@ -61,7 +96,7 @@ export async function POST(req: Request) {
             (globalThis as any).prisma = undefined;
         }
 
-        const { doctorId } = await req.json();
+        const { doctorId, durationDays } = await req.json();
         if (!doctorId) {
             return NextResponse.json({ error: "Missing doctorId" }, { status: 400 });
         }
@@ -73,23 +108,35 @@ export async function POST(req: Request) {
 
         if (!patient) return NextResponse.json({ error: "Patient not found" }, { status: 404 });
 
-        const consent = await (prisma as any).consent.create({
-            data: {
+        const expiresAt = computeExpiry(typeof durationDays === "number" ? durationDays : 30);
+
+        const consent = await (prisma as any).consent.upsert({
+            where: {
+                patientId_doctorId: {
+                    patientId: patient.id,
+                    doctorId,
+                },
+            },
+            update: {
+                status: "ACTIVE",
+                expiresAt,
+                revokedAt: null,
+            },
+            create: {
                 patientId: patient.id,
-                doctorId: doctorId
+                doctorId,
+                status: "ACTIVE",
+                expiresAt,
             },
             include: {
                 doctor: {
                     select: { id: true, name: true, email: true }
                 }
-            }
+            },
         });
 
         return NextResponse.json(consent);
     } catch (error: any) {
-        if (error.code === 'P2002') {
-            return NextResponse.json({ error: "Consent already exists" }, { status: 400 });
-        }
         console.error("CONSENT_POST_ERROR", error);
         return NextResponse.json({ error: "Internal error" }, { status: 500 });
     }
@@ -131,8 +178,12 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ error: "Consent not found or unauthorized" }, { status: 404 });
         }
 
-        await (prisma as any).consent.delete({
-            where: { id: consentId }
+        await (prisma as any).consent.update({
+            where: { id: consentId },
+            data: {
+                status: "REVOKED",
+                revokedAt: new Date(),
+            },
         });
 
         return NextResponse.json({ success: true });

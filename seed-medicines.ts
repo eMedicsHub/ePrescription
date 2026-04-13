@@ -12,7 +12,8 @@ export async function seedMedicines() {
   console.log(`Seeded medicines: ${medicineNames.join(", ")}`);
 }
 
-if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, "/")}`) {
+if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, "/")}` || 
+    import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, "/")}`) {
   seedMedicines()
     .then(async () => {
       await disconnectSeedDb();
