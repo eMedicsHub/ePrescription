@@ -1,24 +1,25 @@
-import { PrismaClient } from '@prisma/client'
+import { disconnectSeedDb, prisma } from "./prisma/seed-utils.ts";
 
-const prisma = new PrismaClient()
-
-async function main() {
-    const medicine = await prisma.medicine.upsert({
-        where: { name: 'Paracetamol' },
-        update: {},
-        create: {
-            name: 'Paracetamol',
-        },
-    })
-    console.log({ medicine })
+export async function seedMedicines() {
+  const medicineNames = ["Paracetamol", "Ibuprofen", "Amoxicillin"];
+  for (const name of medicineNames) {
+    await prisma.medicine.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+  }
+  console.log(`Seeded medicines: ${medicineNames.join(", ")}`);
 }
 
-main()
+if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, "/")}`) {
+  seedMedicines()
     .then(async () => {
-        await prisma.$disconnect()
+      await disconnectSeedDb();
     })
-    .catch(async (e) => {
-        console.error(e)
-        await prisma.$disconnect()
-        process.exit(1)
-    })
+    .catch(async (error) => {
+      console.error("Medicine seed failed:", error);
+      await disconnectSeedDb();
+      process.exit(1);
+    });
+}

@@ -28,7 +28,7 @@ async function main() {
     if (existingUser) {
         const admin = await prisma.user.update({
             where: { email },
-            data: { role: 'ADMIN' },
+            data: { role: 'ADMIN', isApproved: true },
         })
         console.log('User promoted to ADMIN:', admin)
     } else {
@@ -38,6 +38,7 @@ async function main() {
                 name,
                 password: 'adminpassword', // In a real app, this should be hashed
                 role: 'ADMIN',
+                isApproved: true,
             },
         })
         console.log('Admin user created:', admin)

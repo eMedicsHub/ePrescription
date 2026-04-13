@@ -26,10 +26,11 @@ export async function createAdminUser(formData: FormData) {
 
         const admin = await prisma.user.create({
             data: {
-                email: email.trim(),
+                email: email.trim().toLowerCase(),
                 name: name.trim(),
                 password: hashedPassword,
                 role: 'ADMIN',
+                isApproved: true,
             },
         })
 

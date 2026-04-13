@@ -12,6 +12,7 @@ model User {
   password            String
   name                String
   role                Role
+  isApproved          Boolean        @default(false)
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
   patientProfile      Patient?
@@ -22,6 +23,7 @@ model User {
 model Patient {
   id            String         @id @default(cuid())
   userId        String         @unique
+  universalId   String         @unique @default(dbgenerated("('EPID' || nextval('patient_universal_id_seq'))"))
   dob           DateTime
   address       String
   phone         String

@@ -107,7 +107,7 @@ export default function PatientSearch({ onSelect }: { onSelect: (patient: any) =
                                 onClick={() => onSelect(p)}
                             >
                                 <strong>{p.user.name}</strong>
-                                <p className="text-sm text-muted">{p.user.email} | {p.phone}</p>
+                                <p className="text-sm text-muted">{p.universalId} | {p.user.email} | {p.phone}</p>
                             </div>
                         ))}
                         {query.length > 2 && patients.length === 0 && !loading && (
