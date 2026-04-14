@@ -13,10 +13,15 @@ if (!baseUrl) {
 function withSearchPath(urlStr: string, schemaName: string) {
     try {
         const u = new URL(urlStr);
+        // Ensure Prisma tooling (migrate/introspect) targets the tenant schema.
+        u.searchParams.set("schema", schemaName);
         // preserve existing options param if present
         const existing = u.searchParams.get("options") || "";
         const searchPathClause = `-c search_path=${schemaName}`;
-        const combined = existing ? `${existing} ${searchPathClause}` : searchPathClause;
+        const alreadyHasSearchPath = existing.includes("search_path=");
+        const combined = alreadyHasSearchPath
+            ? existing
+            : (existing ? `${existing} ${searchPathClause}` : searchPathClause);
         u.searchParams.set("options", combined.trim());
         return u.toString();
     } catch (e) {

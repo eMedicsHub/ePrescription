@@ -13,8 +13,9 @@ type PortalLoginClientProps = {
     dashboardPath: string;
     accentColor: string;
     subtitle: string;
+    registerPath?: string;
     allowGoogle?: boolean;
-    googleProviderId?: "google-patient" | "google-doctor" | "google-pharmacist";
+    googleProviderId?: "google-patient";
 };
 
 function PortalLoginContent({
@@ -25,6 +26,7 @@ function PortalLoginContent({
     dashboardPath,
     accentColor,
     subtitle,
+    registerPath = "/register",
     allowGoogle = false,
     googleProviderId = "google-patient",
 }: PortalLoginClientProps) {
@@ -42,6 +44,8 @@ function PortalLoginContent({
 
         if (registered === "true") {
             setNotice("Registration successful. You can now sign in.");
+        } else if (registered === "pending") {
+            setNotice("Registration submitted. An admin must approve your account before you can sign in.");
         }
     }, [searchParams]);
 
@@ -96,7 +100,13 @@ function PortalLoginContent({
             });
 
             if (res?.error) {
-                setError("Invalid email or password");
+                if (res.error === "AccountNotApproved") {
+                    setError("Your account is pending admin approval.");
+                } else if (res.error === "UsePortalLogin") {
+                    setError("Use the correct portal for this account role.");
+                } else {
+                    setError("Invalid email or password");
+                }
                 return;
             }
 
@@ -292,7 +302,7 @@ function PortalLoginContent({
                         color: "var(--text-muted)",
                     }}
                 >
-                    Don&apos;t have an account? <Link href="/register" style={{ color: accentColor, fontWeight: 600 }}>Register here</Link>
+                    Don&apos;t have an account? <Link href={registerPath} style={{ color: accentColor, fontWeight: 600 }}>Register here</Link>
                 </p>
             </div>
         </div>

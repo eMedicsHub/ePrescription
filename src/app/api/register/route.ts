@@ -34,6 +34,8 @@ export async function POST(req: Request) {
         }
 
         const hashedPassword = await bcrypt.hash(password, 12);
+        const needsAdminApproval = role === "DOCTOR" || role === "PHARMACIST";
+        const isApproved = !needsAdminApproval;
 
         const user = await prisma.user.create({
             data: {
@@ -41,7 +43,7 @@ export async function POST(req: Request) {
                 password: hashedPassword,
                 name: normalizedName,
                 role,
-                isApproved: true,
+                isApproved,
                 ...(role === "PATIENT" && {
                     patientProfile: {
                         create: {
@@ -57,7 +59,9 @@ export async function POST(req: Request) {
 
 
         return NextResponse.json({
-            message: "Registration successful.",
+            message: isApproved
+                ? "Registration successful."
+                : "Registration submitted. An admin must approve your account before you can log in.",
             user: { id: user.id, email: user.email, name: user.name, role: user.role, isApproved: user.isApproved }
         });
     } catch (error: any) {

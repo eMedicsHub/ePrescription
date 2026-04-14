@@ -65,9 +65,12 @@ export default function PatientDashboardClient() {
     const fetchAnalytics = async () => {
         try {
             const res = await fetch("/api/patient/analytics");
-            const data = await res.json();
-            if (res.ok) {
+            const text = await res.text();
+            const data = text ? JSON.parse(text) : null;
+            if (res.ok && data) {
                 setAnalytics(data);
+            } else if (!res.ok) {
+                console.error("Failed to load analytics", data);
             }
         } catch (err) {
             console.error("Failed to load analytics", err);

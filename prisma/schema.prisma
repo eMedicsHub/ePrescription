@@ -8,114 +8,43 @@ datasource db {
 
 model User {
   id                  String         @id @default(cuid())
-  email               String
+  email               String         @unique
   password            String
   name                String
   role                Role
-  isApproved          Boolean        @default(true)  // Auto-approved in single-tenant
+  isApproved          Boolean        @default(false)
+  denialReason        String?
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
-  
-  // Audit fields (HIPAA § 164.308(a)(5)(ii))
-  auditCreatedBy      String?
-  auditModifiedBy     String?
-
   patientProfile      Patient?
-  doctorProfile       Doctor?
-  pharmacistProfile   Pharmacist?
   doctorPrescriptions Prescription[] @relation("DoctorPrescriptions")
   doctorConsents      Consent[]      @relation("DoctorConsents")
-  createdPatientRecords PatientRecord[] @relation("PatientRecordCreatedBy")
-  doctorPatientRecords  PatientRecord[] @relation("PatientRecordDoctor")
-  accessLogs          AccessLog[]    @relation("UserAccess")
-
-  @@unique([email, role])
-  @@index([email])
-}
-
-model Admin {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  password        String
-  name            String
-  role            AdminRole
-  isApproved      Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  auditCreatedBy  String?
-  auditModifiedBy String?
-
-  @@index([email])
 }
 
 model Patient {
   id            String         @id @default(cuid())
   userId        String         @unique
   universalId   String         @unique
-  dob           DateTime       // Encrypt at app level if needed
-  address       String         // Encrypt at app level if needed
-  phone         String         // Encrypt at app level if needed
-  consentGivenAt DateTime?     // GDPR consent tracking
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dob           DateTime
+  address       String
+  phone         String
+  user          User           @relation(fields: [userId], references: [id])
   prescriptions Prescription[] @relation("PatientPrescriptions")
   consents      Consent[]      @relation("PatientConsents")
-  records       PatientRecord[]
-
-  @@index([userId])
-}
-
-model Doctor {
-  id                String         @id @default(cuid())
-  userId            String         @unique
-  licenseNumber     String?        // Medical license number (compliance)
-  specialization    String?        // Medical specialization
-  hospitalOrgName   String?        // Associated hospital/organization
-  phone             String?
-  consentGivenAt    DateTime?      // GDPR consent
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  
-  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-model Pharmacist {
-  id                String         @id @default(cuid())
-  userId            String         @unique
-  licenseNumber     String?        // Pharmacy license (compliance)
-  pharmacyName      String?        // Associated pharmacy
-  phone             String?
-  consentGivenAt    DateTime?      // GDPR consent
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  
-  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
 }
 
 model Prescription {
-  id             String             @id @default(cuid())
-  patientId      String
-  doctorId       String
-  status         PrescriptionStatus @default(PENDING)
-  notes          String?
-  expiresAt      DateTime?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  auditCreatedBy String?            // Who created
-
-  medications    Medication[]
-  doctor         User               @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
-  patient        Patient            @relation("PatientPrescriptions", fields: [patientId], references: [id])
-  records        PatientRecord[]
-
-  @@index([patientId])
-  @@index([doctorId])
+  id          String             @id @default(cuid())
+  patientId   String
+  doctorId    String
+  status      PrescriptionStatus @default(PENDING)
+  notes       String?
+  expiresAt   DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  medications Medication[]
+  doctor      User               @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
+  patient     Patient            @relation("PatientPrescriptions", fields: [patientId], references: [id])
 }
 
 model Medication {
@@ -125,12 +54,12 @@ model Medication {
   dosage         String
   frequency      String
   duration       String
-  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
-
-  @@index([prescriptionId])
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
 }
 
 enum Role {
+  SUPER_ADMIN   // can manage other admins and has all admin privileges
+  ADMIN         // regular administrator, can add medicines
   DOCTOR
   PHARMACIST
   PATIENT
@@ -141,6 +70,17 @@ enum AdminRole {
   ADMIN
 }
 
+model Admin {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String
+  name      String
+  role      AdminRole
+  isApproved Boolean  @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 enum PrescriptionStatus {
   PENDING
   DISPENSED
@@ -149,101 +89,20 @@ enum PrescriptionStatus {
 }
 
 model Medicine {
-  id       String @id @default(cuid())
-  name     String
-
-  @@unique([name])
+  id   String @id @default(cuid())
+  name String @unique
 }
 
 model Consent {
-  id            String         @id @default(cuid())
-  patientId     String
-  doctorId      String
-  status        ConsentStatus  @default(ACTIVE)
-  expiresAt     DateTime?
-  revokedAt     DateTime?
-  revokedReason String?        // Audit why revoked
-
-  createdAt     DateTime       @default(now())
-  grantedByUser String         // User email/ID who granted
-  modifiedAt    DateTime       @updatedAt
-  modifiedBy    String?        // Who modified
-
-  patient       Patient        @relation("PatientConsents", fields: [patientId], references: [id], onDelete: Cascade)
-  doctor        User           @relation("DoctorConsents", fields: [doctorId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  patientId String
+  doctorId  String
+  createdAt DateTime @default(now())
+  
+  patient   Patient  @relation("PatientConsents", fields: [patientId], references: [id])
+  doctor    User     @relation("DoctorConsents", fields: [doctorId], references: [id])
 
   @@unique([patientId, doctorId])
-  @@index([patientId, status])
 }
+// (Duplicate stray block removed)
 
-enum ConsentStatus {
-  ACTIVE
-  REVOKED
-  EXPIRED
-}
-
-model PatientRecord {
-  id                   String                  @id @default(cuid())
-  patientId            String
-  createdByUserId      String
-  doctorId             String?
-  linkedPrescriptionId String?
-  sourcePortal         PatientRecordSourcePortal
-  category             PatientRecordCategory
-  title                String
-  description          String?
-  tags                 String[]                @default([])
-  storagePath          String?
-  originalFileName     String?
-  mimeType             String?
-  sizeBytes            Int?
-  checksum             String?
-  amount               Decimal?                @db.Decimal(10, 2)
-  occurredAt           DateTime                @default(now())
-  createdAt            DateTime                @default(now())
-  updatedAt            DateTime                @updatedAt
-
-  patient              Patient                 @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  createdBy            User                    @relation("PatientRecordCreatedBy", fields: [createdByUserId], references: [id])
-  doctor               User?                   @relation("PatientRecordDoctor", fields: [doctorId], references: [id])
-  linkedPrescription   Prescription?           @relation(fields: [linkedPrescriptionId], references: [id])
-  accessLogs           AccessLog[]             @relation("RecordAccess")
-
-  @@index([patientId, occurredAt])
-  @@index([patientId, category, occurredAt])
-}
-
-enum PatientRecordCategory {
-  PRESCRIPTION
-  LAB_REPORT
-  IMAGING
-  CONSULTATION_NOTE
-  DISCHARGE_SUMMARY
-  MEDICAL_BILL
-  OTHER
-}
-
-// HIPAA audit log (immutable) - § 164.312(b)
-model AccessLog {
-  id              String    @id @default(cuid())
-  patientRecordId String
-  userId          String?
-  userName        String?   // Cached for audit
-  accessType      String    // "READ", "MODIFY", "DELETE", "EXPORT"
-  reason          String?   // Clinical reason or "ADMIN"
-  ipAddress       String?
-  userAgent       String?
-  timestamp       DateTime  @default(now())
-  notes           String?
-
-  user            User?     @relation("UserAccess", fields: [userId], references: [id], onDelete: SetNull)
-  record          PatientRecord @relation("RecordAccess", fields: [patientRecordId], references: [id], onDelete: Cascade)
-
-  @@index([patientRecordId, timestamp])
-  @@index([userId, timestamp])
-}
-
-enum PatientRecordSourcePortal {
-  PATIENT
-  DOCTOR
-}

@@ -31,8 +31,8 @@ export default function RegisterPage() {
             if (res.ok) {
                 const portalLoginMap: Record<string, string> = {
                     PATIENT: "/mypa/login?registered=true",
-                    DOCTOR: "/mydp/login?registered=true",
-                    PHARMACIST: "/myph/login?registered=true",
+                    DOCTOR: "/mydp/login?registered=pending",
+                    PHARMACIST: "/myph/login?registered=pending",
                 };
                 router.push(portalLoginMap[formData.role] || "/login?registered=true");
             } else {
@@ -47,23 +47,15 @@ export default function RegisterPage() {
     };
 
     const handleGoogleSignIn = async () => {
+        if (formData.role !== "PATIENT") {
+            setError("Google sign-in is available only for patient accounts.");
+            return;
+        }
+
         setLoading(true);
         setError("");
         try {
-            const googleProviderByRole: Record<string, "google-patient" | "google-doctor" | "google-pharmacist"> = {
-                PATIENT: "google-patient",
-                DOCTOR: "google-doctor",
-                PHARMACIST: "google-pharmacist",
-            };
-            const callbackByRole: Record<string, string> = {
-                PATIENT: "/dashboard/patient",
-                DOCTOR: "/dashboard/doctor",
-                PHARMACIST: "/dashboard/pharmacist",
-            };
-            const provider = googleProviderByRole[formData.role] || "google-patient";
-            const callbackUrl = callbackByRole[formData.role] || "/dashboard/patient";
-
-            await signIn(provider, { callbackUrl });
+            await signIn("google-patient", { callbackUrl: "/dashboard/patient" });
         } catch {
             setError("Google sign-in failed");
             setLoading(false);
@@ -87,7 +79,7 @@ export default function RegisterPage() {
                     fontSize: "0.875rem",
                     marginBottom: "1rem",
                 }}>
-                    New accounts can sign in immediately after registration.
+                    Patient accounts can sign in immediately. Doctor and pharmacist accounts require admin approval before login.
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -146,10 +138,10 @@ export default function RegisterPage() {
                     type="button"
                     className="btn"
                     style={{ marginTop: "0.75rem", width: "100%" }}
-                    disabled={loading}
+                    disabled={loading || formData.role !== "PATIENT"}
                     onClick={handleGoogleSignIn}
                 >
-                    Register with Google
+                    {formData.role === "PATIENT" ? "Register with Google" : "Google is only for Patient"}
                 </button>
 
                 <p className="text-center mt-4 text-sm">

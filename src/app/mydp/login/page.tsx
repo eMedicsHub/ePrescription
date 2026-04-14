@@ -10,8 +10,7 @@ export default function DoctorPortalLoginPage() {
             dashboardPath="/dashboard/doctor"
             accentColor="#1d4ed8"
             subtitle="Manage patients, prescriptions, and linked health records securely."
-            allowGoogle
-            googleProviderId="google-doctor"
+            registerPath="/mydp/register"
         />
     );
 }

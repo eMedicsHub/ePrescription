@@ -10,8 +10,7 @@ export default function PharmacistPortalLoginPage() {
             dashboardPath="/dashboard/pharmacist"
             accentColor="#7c3aed"
             subtitle="Review prescriptions, dispense medication, and manage fulfillment status."
-            allowGoogle
-            googleProviderId="google-pharmacist"
+            registerPath="/myph/register"
         />
     );
 }
