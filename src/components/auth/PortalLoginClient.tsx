@@ -14,8 +14,6 @@ type PortalLoginClientProps = {
     accentColor: string;
     subtitle: string;
     registerPath?: string;
-    allowGoogle?: boolean;
-    googleProviderId?: "google-patient";
 };
 
 function PortalLoginContent({
@@ -27,8 +25,6 @@ function PortalLoginContent({
     accentColor,
     subtitle,
     registerPath = "/register",
-    allowGoogle = false,
-    googleProviderId = "google-patient",
 }: PortalLoginClientProps) {
     const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
@@ -118,21 +114,7 @@ function PortalLoginContent({
         }
     };
 
-    const handleGoogleSignIn = async () => {
-        setLoading(true);
-        setError("");
-
-        try {
-            // Pass login_hint to Google so the OAuth flow can prefill the email if provided
-            const options: Record<string, string | undefined> = { callbackUrl: dashboardPath };
-            if (identifier) options["login_hint"] = identifier;
-
-            await signIn(googleProviderId, options);
-        } catch {
-            setError("Google sign-in failed");
-            setLoading(false);
-        }
-    };
+    
 
     return (
         <div className="auth-container" style={{ flexDirection: "column", gap: "2rem" }}>
@@ -241,17 +223,7 @@ function PortalLoginContent({
                                 {`Sign in to ${portalLabel}`}
                             </button>
 
-                            {allowGoogle && (
-                                <button
-                                    type="button"
-                                    disabled={loading}
-                                    onClick={handleGoogleSignIn}
-                                    className="btn"
-                                    style={{ marginTop: "0.5rem", width: "100%" }}
-                                >
-                                    Continue with Google
-                                </button>
-                            )}
+                            
                         </div>
                     )}
 
@@ -279,17 +251,7 @@ function PortalLoginContent({
                                 {loading ? "Signing in…" : "Sign In"}
                             </button>
 
-                            {allowGoogle && (
-                                <button
-                                    type="button"
-                                    disabled={loading}
-                                    onClick={handleGoogleSignIn}
-                                    className="btn"
-                                    style={{ marginTop: "0.5rem", width: "100%" }}
-                                >
-                                    Continue with Google
-                                </button>
-                            )}
+                            
                         </>
                     )}
                 </form>

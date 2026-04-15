@@ -1,4 +1,4 @@
-import PortalLoginClient from "@/components/PortalLoginClient";
+import PortalLoginClient from "@/components/auth/PortalLoginClient";
 
 export default function PatientPortalLoginPage() {
     return (
@@ -11,8 +11,6 @@ export default function PatientPortalLoginPage() {
             accentColor="#0f766e"
             subtitle="Access your health timeline, records, and doctor-sharing controls."
             registerPath="/mypa/register"
-            allowGoogle
-            googleProviderId="google-patient"
         />
     );
 }

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -42,22 +41,6 @@ export default function RegisterPage() {
         } catch (err) {
             setError("An unexpected error occurred");
         } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleGoogleSignIn = async () => {
-        if (formData.role !== "PATIENT") {
-            setError("Google sign-in is available only for patient accounts.");
-            return;
-        }
-
-        setLoading(true);
-        setError("");
-        try {
-            await signIn("google-patient", { callbackUrl: "/dashboard/patient" });
-        } catch {
-            setError("Google sign-in failed");
             setLoading(false);
         }
     };
@@ -134,15 +117,6 @@ export default function RegisterPage() {
                     </button>
                 </form>
 
-                <button
-                    type="button"
-                    className="btn"
-                    style={{ marginTop: "0.75rem", width: "100%" }}
-                    disabled={loading || formData.role !== "PATIENT"}
-                    onClick={handleGoogleSignIn}
-                >
-                    {formData.role === "PATIENT" ? "Register with Google" : "Google is only for Patient"}
-                </button>
 
                 <p className="text-center mt-4 text-sm">
                     Already have an account? <Link href="/login" className="link">Login here</Link>

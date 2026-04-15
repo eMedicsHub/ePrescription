@@ -1,8 +1,8 @@
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/ui/Navbar";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import PatientDashboardClient from "@/components/PatientDashboardClient";
+import PatientDashboardClient from "@/components/dashboard/patient/PatientDashboardClient";
 
 export default async function PatientDashboard() {
     const session = await getServerSession(authOptions);

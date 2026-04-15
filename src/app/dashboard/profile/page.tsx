@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/ui/Navbar";
 
 export default async function ProfilePage() {
     const session = await getServerSession(authOptions);

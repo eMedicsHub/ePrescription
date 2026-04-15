@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import PatientSearch from "./PatientSearch";
-import PrescriptionForm from "./PrescriptionForm";
-import PastPrescriptions from "./PastPrescriptions";
+import PatientSearch from "@/components/dashboard/patient/PatientSearch";
+import PrescriptionForm from "@/components/prescriptions/PrescriptionForm";
+import PastPrescriptions from "@/components/prescriptions/PastPrescriptions";
 
 export default function DoctorDashboardClient() {
     const [selectedPatient, setSelectedPatient] = useState<any>(null);

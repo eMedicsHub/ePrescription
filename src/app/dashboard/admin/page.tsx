@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { addMedicine } from '@/lib/actions/medicineActions'
 import { createAdminUser } from '@/lib/actions/adminActions'
 import { useSession } from 'next-auth/react'
-import Navbar from '@/components/Navbar'
+import Navbar from '@/components/ui/Navbar'
 import { Pill, PlusCircle, UserPlus, Mail, Lock, User, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react'
 
 type PendingRegistration = {

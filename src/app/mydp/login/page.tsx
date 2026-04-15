@@ -1,4 +1,4 @@
-import PortalLoginClient from "@/components/PortalLoginClient";
+import PortalLoginClient from "@/components/auth/PortalLoginClient";
 
 export default function DoctorPortalLoginPage() {
     return (

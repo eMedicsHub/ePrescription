@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
 
 const ROLE = "PATIENT";
 const PORTAL_KEY = "mypa";
@@ -44,17 +43,6 @@ export default function PatientRegisterPage() {
         } catch (err) {
             setError("An unexpected error occurred");
         } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleGoogleSignIn = async () => {
-        setLoading(true);
-        setError("");
-        try {
-            await signIn("google-patient", { callbackUrl: DASHBOARD_PATH });
-        } catch {
-            setError("Google sign-up failed");
             setLoading(false);
         }
     };
@@ -161,15 +149,6 @@ export default function PatientRegisterPage() {
                     </button>
                 </form>
 
-                <button
-                    type="button"
-                    className="btn"
-                    style={{ marginTop: "0.75rem", width: "100%" }}
-                    disabled={loading}
-                    onClick={handleGoogleSignIn}
-                >
-                    Sign up with Google
-                </button>
 
                 <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", textAlign: "center", marginTop: "1rem" }}>
                     Already have an account? <Link href={`/${PORTAL_KEY}/login`} style={{ color: ACCENT_COLOR, fontWeight: 600 }}>Sign in here</Link>

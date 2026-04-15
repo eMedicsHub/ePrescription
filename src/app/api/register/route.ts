@@ -23,10 +23,7 @@ export async function POST(req: Request) {
         }
 
         const existingUser = await prisma.user.findFirst({
-            where: {
-                email: normalizedEmail,
-                role,
-            }
+            where: { email: normalizedEmail }
         });
 
         if (existingUser) {

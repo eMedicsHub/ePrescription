@@ -1,4 +1,4 @@
-import AdminLoginClient from "@/components/AdminLoginClient";
+import AdminLoginClient from "@/components/auth/AdminLoginClient";
 
 export default function AdminLoginPage() {
     return (
