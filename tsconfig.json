@@ -9,6 +9,7 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
@@ -34,7 +35,8 @@
     "node_modules",
     "prisma/seed.ts",
     "prisma/seed-utils.ts",
-    "seed-super-admin.ts",
-    "seed-medicines.ts"
+    "prisma/seed-super-admin.ts",
+    "prisma/seed-medicines.ts",
+    "prisma/seed-patient-foundation.ts"
   ]
 }

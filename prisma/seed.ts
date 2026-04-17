@@ -1,10 +1,12 @@
-import { disconnectSeedDb } from "./seed-utils";
-import { seedAdminUsers } from "./seed-super-admin";
-import { seedMedicines } from "./seed-medicines";
+import { disconnectSeedDb } from "./seed-utils.ts";
+import { seedAdminUsers } from "./seed-super-admin.ts";
+import { seedMedicines } from "./seed-medicines.ts";
+import { seedPatientFoundation } from "./seed-patient-foundation.ts";
 
 async function main() {
   await seedAdminUsers();
   await seedMedicines();
+  await seedPatientFoundation();
   console.log("All seeds completed");
 }
 

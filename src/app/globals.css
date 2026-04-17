@@ -709,6 +709,13 @@ select:focus {
   gap: 1.25rem;
 }
 
+.patient-grid-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
 .patient-metrics-grid,
 .patient-insights-grid {
   display: grid;
@@ -750,6 +757,19 @@ select:focus {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+}
+
+.patient-records-layout {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.patient-records-form-card {
+  min-width: 0;
+}
+
+.patient-records-library-card {
+  min-width: 0;
 }
 
 .patient-feature-card {
@@ -864,6 +884,50 @@ select:focus {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+}
+
+.patient-form-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.patient-records-page-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.patient-records-page-form .input-group {
+  margin: 0;
+}
+
+.patient-records-top-grid,
+.patient-records-meta-grid {
+  align-items: start;
+}
+
+.patient-records-top-grid .input-group,
+.patient-records-meta-grid .input-group {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.patient-records-top-grid .input-group input,
+.patient-records-top-grid .input-group select,
+.patient-records-meta-grid .input-group input,
+.patient-records-meta-grid .input-group textarea {
+  flex: 1;
+}
+
+.patient-records-meta-grid textarea {
+  min-height: 116px;
+}
+
+.patient-records-file-group input[type="file"] {
+  padding: 0.9rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
 }
 
 textarea {
@@ -1222,4 +1286,66 @@ textarea:focus {
   .patient-modal-card {
     padding: 1.1rem;
   }
+}
+
+/* Simple SaaS Production Theme Overrides */
+.patient-portal-shell {
+  gap: 1.25rem;
+}
+
+.patient-hero,
+.patient-sidebar-card,
+.patient-feature-card,
+.patient-modal-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 20px -16px rgba(15, 23, 42, 0.35);
+  backdrop-filter: none;
+}
+
+.patient-hero {
+  border-radius: 16px;
+  padding: 1.1rem 1.2rem;
+}
+
+.patient-hero-badge {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.patient-nav-button {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 10px;
+}
+
+.patient-nav-button.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: none;
+}
+
+.patient-action-primary {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.patient-action-primary:hover {
+  background: #1d4ed8;
+}
+
+.patient-action-secondary {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #1f2937;
+}
+
+.patient-insight-row,
+.patient-consent-card,
+.patient-doctor-result,
+.patient-prescription-card,
+.patient-timeline-card {
+  border: 1px solid #e5e7eb;
+  box-shadow: none;
+  background: #fff;
 }

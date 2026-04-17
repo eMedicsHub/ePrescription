@@ -1,4 +1,4 @@
-import { disconnectSeedDb, prisma } from "./seed-utils";
+import { disconnectSeedDb, prisma } from "./seed-utils.ts";
 
 export async function seedMedicines() {
   const medicineNames = ["Paracetamol", "Ibuprofen", "Amoxicillin"];

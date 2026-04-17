@@ -2,7 +2,7 @@ import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
 const baseUrl = process.env["DATABASE_URL"];
-const tenantId = (process.env["TENANT_ID"] || "public").toLowerCase().replace(/[^a-z0-9_]/g, "_");
+const tenantId = (process.env["TENANT_ID"] || "saas").toLowerCase().replace(/[^a-z0-9_]/g, "_");
 
 if (!baseUrl) {
     throw new Error("DATABASE_URL is not configured");
@@ -35,6 +35,7 @@ export default defineConfig({
     schema: "prisma/schema.prisma",
     migrations: {
         path: "prisma/migrations",
+        seed: "node prisma/seed.ts",
     },
     datasource: {
         url: tenantAwareUrl,
