@@ -167,6 +167,8 @@ model PatientRecord {
   sizeBytes            Int?
   checksum             String?
   amount               Decimal?                  @db.Decimal(10, 2)
+  reportDate           DateTime?
+  reports              String[]                  @default([])
   occurredAt           DateTime                  @default(now())
   createdAt            DateTime                  @default(now())
   updatedAt            DateTime                  @updatedAt

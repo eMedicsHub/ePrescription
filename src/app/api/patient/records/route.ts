@@ -99,6 +99,8 @@ export async function GET(req: Request) {
                 mimeType: true,
                 sizeBytes: true,
                 amount: true,
+                reportDate: true,
+                reports: true,
                 occurredAt: true,
                 createdAt: true,
                 doctor: {
@@ -151,6 +153,11 @@ export async function POST(req: Request) {
     const linkedPrescriptionId = String(formData.get("linkedPrescriptionId") || "").trim() || null;
     const occurredAtValue = String(formData.get("occurredAt") || "").trim();
     const amountValue = String(formData.get("amount") || "").trim();
+    const reportDateValue = String(formData.get("reportDate") || "").trim();
+    const reports = String(formData.get("reports") || "")
+        .split("\n")
+        .map((entry) => entry.trim())
+        .filter(Boolean);
     const patientId = String(formData.get("patientId") || "").trim() || undefined;
     const file = formData.get("file");
     const role = (session.user as any).role;
@@ -167,6 +174,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Doctor uploads require patientId" }, { status: 400 });
     }
 
+    if (category === "LAB_REPORT" && !reportDateValue) {
+        return NextResponse.json({ error: "Lab reports require a report date" }, { status: 400 });
+    }
+
     const patient = await resolvePatientForSession(session, patientId);
     if (!patient) {
         return NextResponse.json({ error: "Active patient consent required" }, { status: 403 });
@@ -174,6 +185,12 @@ export async function POST(req: Request) {
 
     const createdByUserId = (session.user as any).id;
     const sourcePortal = role === "DOCTOR" ? "DOCTOR" : "PATIENT";
+    const reportDate = reportDateValue ? new Date(reportDateValue) : null;
+    const occurredAt = category === "LAB_REPORT" && reportDate
+        ? reportDate
+        : occurredAtValue
+            ? new Date(occurredAtValue)
+            : new Date();
 
     const recordId = crypto.randomUUID();
     const uploadResult = file instanceof File && file.size > 0
@@ -203,7 +220,9 @@ export async function POST(req: Request) {
             sizeBytes: uploadResult?.sizeBytes || null,
             checksum: uploadResult?.checksum || null,
             amount: amountValue ? amountValue : null,
-            occurredAt: occurredAtValue ? new Date(occurredAtValue) : new Date(),
+            reportDate,
+            reports,
+            occurredAt,
         },
         include: {
             doctor: {

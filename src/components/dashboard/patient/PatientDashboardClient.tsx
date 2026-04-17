@@ -6,8 +6,8 @@ type PatientTab = "overview" | "records" | "timeline" | "prescriptions" | "insig
 
 const tabMeta: Array<{ id: PatientTab; label: string; eyebrow: string; description: string }> = [
     { id: "overview", label: "Overview", eyebrow: "Today", description: "See your health summary, recent activity, and quick actions at a glance." },
-    { id: "records", label: "Records", eyebrow: "Library", description: "Store lab reports, imaging, bills, and personal notes in one tidy place." },
-    { id: "timeline", label: "Timeline", eyebrow: "History", description: "Review your full medical story in chronological order." },
+    { id: "records", label: "Records", eyebrow: "Library", description: "" },
+    { id: "timeline", label: "Timeline", eyebrow: "History", description: "Review your full medical story in order." },
     { id: "prescriptions", label: "Prescriptions", eyebrow: "Medicines", description: "Track active and past prescriptions with doctor context." },
     { id: "insights", label: "Insights", eyebrow: "Patterns", description: "Understand your prescription trends, records mix, and upcoming expiries." },
     { id: "access", label: "Doctor Access", eyebrow: "Sharing", description: "Control which doctors can view your complete history and for how long." },
@@ -71,6 +71,8 @@ export default function PatientDashboardClient() {
         category: "LAB_REPORT",
         tags: "",
         amount: "",
+        reportDate: "",
+        reports: "",
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [consents, setConsents] = useState<any[]>([]);
@@ -245,6 +247,8 @@ export default function PatientDashboardClient() {
             formData.append("category", recordForm.category);
             formData.append("tags", recordForm.tags);
             if (recordForm.amount) formData.append("amount", recordForm.amount);
+            if (recordForm.reportDate) formData.append("reportDate", recordForm.reportDate);
+            if (recordForm.reports) formData.append("reports", recordForm.reports);
             if (selectedFile) formData.append("file", selectedFile);
 
             const res = await fetch("/api/patient/records", {
@@ -264,6 +268,8 @@ export default function PatientDashboardClient() {
                 category: "LAB_REPORT",
                 tags: "",
                 amount: "",
+                reportDate: "",
+                reports: "",
             });
             setSelectedFile(null);
             await Promise.all([fetchRecords(), fetchTimeline(), fetchAnalytics()]);
@@ -288,6 +294,8 @@ export default function PatientDashboardClient() {
     const latestEntry = timeline[0];
     const latestRecord = records[0];
     const currentTabMeta = tabMeta.find((tab) => tab.id === activeTab) ?? tabMeta[0];
+    const isLabReport = recordForm.category === "LAB_REPORT";
+    const isMedicalBill = recordForm.category === "MEDICAL_BILL";
 
     return (
         <div className="patient-portal-shell">
@@ -295,9 +303,6 @@ export default function PatientDashboardClient() {
                 <div className="patient-hero-copy">
                     <div className="patient-hero-badge">eMeds Tracker</div>
                     <h1>Health Overview</h1>
-                    <p>
-                        A quick snapshot of your records, prescriptions, shared access, and recent activity.
-                    </p>
                     <div className="patient-hero-actions">
                         <button className="patient-action-primary" onClick={() => setActiveTab("records")}>
                             Add a health record
@@ -328,7 +333,7 @@ export default function PatientDashboardClient() {
                         </div>
                     </div>
                     <div className="patient-hero-footnote">
-                        {latestEntry ? `Latest activity: ${latestEntry.title} on ${formatDate(latestEntry.occurredAt)}` : "Start by adding your first record or reviewing your history."}
+                        {latestEntry ? `Latest activity: ${latestEntry.title} on ${formatDate(latestEntry.occurredAt)}` : ""}
                     </div>
                 </div>
             </section>
@@ -448,15 +453,30 @@ export default function PatientDashboardClient() {
                                                     <option value="OTHER">Other</option>
                                                 </select>
                                             </div>
-                                            <div className="input-group">
-                                                <label>Tags</label>
-                                                <input value={recordForm.tags} onChange={(e) => setRecordForm((current) => ({ ...current, tags: e.target.value }))} placeholder="allergy, annual-checkup" />
-                                            </div>
-                                            <div className="input-group">
-                                                <label>Bill Amount</label>
-                                                <input value={recordForm.amount} onChange={(e) => setRecordForm((current) => ({ ...current, amount: e.target.value }))} placeholder="Optional" />
-                                            </div>
                                         </div>
+
+                                        {isLabReport && (
+                                            <div className="patient-form-grid">
+                                                <div className="input-group">
+                                                    <label>Report Date</label>
+                                                    <input
+                                                        type="date"
+                                                        value={recordForm.reportDate}
+                                                        onChange={(e) => setRecordForm((current) => ({ ...current, reportDate: e.target.value }))}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="input-group">
+                                                    <label>Reports in File</label>
+                                                    <textarea
+                                                        value={recordForm.reports}
+                                                        onChange={(e) => setRecordForm((current) => ({ ...current, reports: e.target.value }))}
+                                                        rows={3}
+                                                        placeholder={"CBC\nLipid Profile\nThyroid Panel"}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div className="input-group">
                                             <label>Description</label>
@@ -464,8 +484,24 @@ export default function PatientDashboardClient() {
                                         </div>
 
                                         <div className="input-group">
+                                            <label>Tags</label>
+                                            <input value={recordForm.tags} onChange={(e) => setRecordForm((current) => ({ ...current, tags: e.target.value }))} placeholder="allergy, annual-checkup" />
+                                        </div>
+
+                                        {isMedicalBill && (
+                                            <div className="input-group">
+                                                <label>Bill Amount</label>
+                                                <input
+                                                    value={recordForm.amount}
+                                                    onChange={(e) => setRecordForm((current) => ({ ...current, amount: e.target.value }))}
+                                                    placeholder="Enter the billed amount"
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div className="input-group">
                                             <label>Attach File</label>
-                                            <input type="file" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
+                                            <input key={`overview-file-${recordForm.category}`} type="file" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
                                         </div>
 
                                         <button type="submit" className="patient-action-primary" disabled={uploading}>
@@ -515,8 +551,8 @@ export default function PatientDashboardClient() {
                             <section className="patient-records-layout">
                                 <article className="card patient-feature-card">
                                     <div className="patient-card-topline">Add to history</div>
-                                    <h3>Upload a record cleanly</h3>
-                                    <p className="patient-helper-text">Keep every scan, bill, and consultation note structured so it is easier to find later.</p>
+                                    <h3>Upload a Record</h3>
+                                    <p className="patient-helper-text"></p>
 
                                     <form onSubmit={handleRecordSubmit} className="patient-record-form">
                                         {uploadError && <div className="error-message">{uploadError}</div>}
@@ -537,22 +573,50 @@ export default function PatientDashboardClient() {
                                                     <option value="OTHER">Other</option>
                                                 </select>
                                             </div>
-                                            <div className="input-group">
-                                                <label>Tags</label>
-                                                <input value={recordForm.tags} onChange={(e) => setRecordForm((current) => ({ ...current, tags: e.target.value }))} placeholder="bloodwork, orthopedics" />
-                                            </div>
-                                            <div className="input-group">
-                                                <label>Bill Amount</label>
-                                                <input value={recordForm.amount} onChange={(e) => setRecordForm((current) => ({ ...current, amount: e.target.value }))} placeholder="Optional" />
-                                            </div>
                                         </div>
+                                        {isLabReport && (
+                                            <div className="patient-form-grid">
+                                                <div className="input-group">
+                                                    <label>Report Date</label>
+                                                    <input
+                                                        type="date"
+                                                        value={recordForm.reportDate}
+                                                        onChange={(e) => setRecordForm((current) => ({ ...current, reportDate: e.target.value }))}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="input-group">
+                                                    <label>Reports in File</label>
+                                                    <textarea
+                                                        value={recordForm.reports}
+                                                        onChange={(e) => setRecordForm((current) => ({ ...current, reports: e.target.value }))}
+                                                        rows={3}
+                                                        placeholder={"CBC\nLipid Profile\nThyroid Panel"}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
                                         <div className="input-group">
                                             <label>Description</label>
                                             <textarea value={recordForm.description} onChange={(e) => setRecordForm((current) => ({ ...current, description: e.target.value }))} rows={4} />
                                         </div>
                                         <div className="input-group">
+                                            <label>Tags</label>
+                                            <input value={recordForm.tags} onChange={(e) => setRecordForm((current) => ({ ...current, tags: e.target.value }))} placeholder="bloodwork, orthopedics" />
+                                        </div>
+                                        {isMedicalBill && (
+                                            <div className="input-group">
+                                                <label>Bill Amount</label>
+                                                <input
+                                                    value={recordForm.amount}
+                                                    onChange={(e) => setRecordForm((current) => ({ ...current, amount: e.target.value }))}
+                                                    placeholder="Enter the billed amount"
+                                                />
+                                            </div>
+                                        )}
+                                        <div className="input-group">
                                             <label>File</label>
-                                            <input type="file" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
+                                            <input key={`records-file-${recordForm.category}`} type="file" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
                                         </div>
 
                                         <button type="submit" className="patient-action-primary" disabled={uploading}>
@@ -571,12 +635,26 @@ export default function PatientDashboardClient() {
                                                 <div className="patient-record-header">
                                                     <div>
                                                         <strong>{record.title}</strong>
-                                                        <p>{categoryLabelMap[record.category] || record.category} - {formatDate(record.occurredAt)}</p>
+                                                        <p>
+                                                            {categoryLabelMap[record.category] || record.category}
+                                                            {" - "}
+                                                            {formatDate(record.reportDate || record.occurredAt)}
+                                                        </p>
                                                     </div>
                                                     <span className="patient-record-origin">
                                                         {record.sourcePortal === "DOCTOR" ? `Added by Dr. ${record.doctor?.name || record.createdBy?.name}` : "Added by you"}
                                                     </span>
                                                 </div>
+                                                {record.category === "LAB_REPORT" && record.reportDate && (
+                                                    <p className="patient-record-description">Report date: {formatDate(record.reportDate)}</p>
+                                                )}
+                                                {record.category === "LAB_REPORT" && Array.isArray(record.reports) && record.reports.length > 0 && (
+                                                    <div className="patient-tag-list">
+                                                        {record.reports.map((reportName: string) => (
+                                                            <span key={reportName} className="patient-tag patient-tag-highlight">{reportName}</span>
+                                                        ))}
+                                                    </div>
+                                                )}
                                                 {record.description && <p className="patient-record-description">{record.description}</p>}
                                                 <div className="patient-record-footer">
                                                     <div className="patient-tag-list">

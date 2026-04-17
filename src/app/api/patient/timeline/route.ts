@@ -63,7 +63,10 @@ export async function GET() {
                 kind: "RECORD",
                 occurredAt: record.occurredAt,
                 title: record.title,
-                summary: `${record.category.replaceAll("_", " ")} - Added from ${record.sourcePortal.toLowerCase()} portal`,
+                summary:
+                    record.category === "LAB_REPORT" && Array.isArray(record.reports) && record.reports.length > 0
+                        ? `${record.reports.length} report(s) in file - ${record.sourcePortal.toLowerCase()} portal`
+                        : `${record.category.replaceAll("_", " ")} - Added from ${record.sourcePortal.toLowerCase()} portal`,
                 doctor: record.doctor,
                 payload: record,
             })),
