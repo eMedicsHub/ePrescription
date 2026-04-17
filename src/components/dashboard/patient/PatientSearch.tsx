@@ -37,7 +37,7 @@ export default function PatientSearch({ onSelect }: { onSelect: (patient: any) =
             if (Array.isArray(data)) {
                 setPatients(data);
             } else {
-                console.error("Patient API returned non-array:", data);
+                console.error("EmedsUser API returned non-array:", data);
                 setPatients([]);
             }
         } catch (err) {
@@ -77,7 +77,7 @@ export default function PatientSearch({ onSelect }: { onSelect: (patient: any) =
                 setNewPhone("");
                 setNewEmail("");
             } else {
-                setErrorMsg(data.error || "Failed to create patient");
+                setErrorMsg(data.error || "Failed to create EmedsUser");
             }
         } catch (err) {
             setErrorMsg("Network error occurred");
@@ -88,7 +88,7 @@ export default function PatientSearch({ onSelect }: { onSelect: (patient: any) =
 
     return (
         <div className="card">
-            <h3>Search Patient</h3>
+            <h3>Search EmedsUser</h3>
             {!showNewForm ? (
                 <>
                     <input
@@ -112,7 +112,7 @@ export default function PatientSearch({ onSelect }: { onSelect: (patient: any) =
                         ))}
                         {query.length > 2 && patients.length === 0 && !loading && (
                             <div style={{ textAlign: "center", marginTop: "1rem" }}>
-                                <p className="text-muted" style={{ marginBottom: "1rem" }}>No patients found.</p>
+                                <p className="text-muted" style={{ marginBottom: "1rem" }}>No EmedsUsers found.</p>
                                 <button
                                     className="btn btn-primary"
                                     style={{ fontSize: "0.875rem", padding: "0.5rem 1rem" }}
@@ -121,7 +121,7 @@ export default function PatientSearch({ onSelect }: { onSelect: (patient: any) =
                                         setShowNewForm(true);
                                     }}
                                 >
-                                    Add New Patient
+                                    Add New EmedsUser
                                 </button>
                             </div>
                         )}
@@ -174,7 +174,7 @@ export default function PatientSearch({ onSelect }: { onSelect: (patient: any) =
                             Cancel
                         </button>
                         <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={isCreating}>
-                            {isCreating ? "Creating..." : "Save Patient"}
+                            {isCreating ? "Creating..." : "Save EmedsUser"}
                         </button>
                     </div>
                 </form>

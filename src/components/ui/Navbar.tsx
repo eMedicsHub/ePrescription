@@ -11,7 +11,7 @@ export default function Navbar() {
     const getPortalName = () => {
         if (!userRole) return "";
         switch (userRole) {
-            case "PATIENT": return "Patient Portal";
+            case "PATIENT": return "EmedsUser";
             case "DOCTOR": return "Doctor Portal";
             case "PHARMACIST": return "Pharmacist Portal";
             case "ADMIN":
@@ -35,6 +35,14 @@ export default function Navbar() {
                     {((session?.user as any)?.role === "ADMIN" || (session?.user as any)?.role === "SUPER_ADMIN") && (
                         <Link href="/dashboard/admin" className="nav-link">Admin Panel</Link>
                     )}
+                    {(session?.user as any)?.role === "PATIENT" && (
+                        <Link href="/dashboard/health-profile" className="nav-link link">
+                            Health Profile
+                        </Link>
+                    )}
+                    <Link href="/dashboard/settings" className="nav-link link">
+                        Settings
+                    </Link>
                     <Link href="/dashboard/profile" className="nav-user link" style={{ cursor: "pointer", display: "inline-block" }}>
                         {session?.user?.name} ({(session?.user as any)?.role})
                     </Link>

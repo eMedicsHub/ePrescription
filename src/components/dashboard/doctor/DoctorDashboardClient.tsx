@@ -67,7 +67,7 @@ export default function DoctorDashboardClient() {
                         <>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
                                 <h2 style={{ margin: 0 }}>
-                                    Patient:
+                                    EmedsUser:
                                     <span
                                         style={{ color: "var(--primary)", marginLeft: "0.5rem", marginRight: "0.5rem" }}
                                     >
@@ -134,7 +134,7 @@ export default function DoctorDashboardClient() {
                         </>
                     ) : (
                         <div className="card text-center" style={{ padding: "4rem" }}>
-                            <p className="text-muted">Select a patient to start a new prescription</p>
+                            <p className="text-muted">Select an EmedsUser to start a new prescription</p>
                         </div>
                     )}
                 </div>

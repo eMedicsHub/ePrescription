@@ -4,8 +4,8 @@ export default function PatientPortalLoginPage() {
     return (
         <PortalLoginClient
             portalKey="mypa"
-            portalLabel="mypa"
-            roleLabel="Patient"
+            portalLabel="EmedsUser"
+            roleLabel="EmedsUser"
             expectedRole="PATIENT"
             dashboardPath="/dashboard/patient"
             accentColor="#0f766e"

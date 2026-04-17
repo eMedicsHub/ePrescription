@@ -7,7 +7,7 @@ import Link from "next/link";
 const ROLE = "PATIENT";
 const PORTAL_KEY = "mypa";
 const PORTAL_LABEL = "mypa";
-const ROLE_LABEL = "Patient";
+const ROLE_LABEL = "EmedsUser";
 const ACCENT_COLOR = "#0f766e";
 const DASHBOARD_PATH = "/dashboard/patient";
 

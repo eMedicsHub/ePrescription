@@ -18,6 +18,7 @@ export async function GET() {
     const registrations = await prisma.user.findMany({
         where: {
             isApproved: false,
+            denialReason: null,
             role: {
                 in: ["DOCTOR", "PHARMACIST", "PATIENT"],
             },

@@ -9,7 +9,7 @@ export default function DoctorPortalLoginPage() {
             expectedRole="DOCTOR"
             dashboardPath="/dashboard/doctor"
             accentColor="#1d4ed8"
-            subtitle="Manage patients, prescriptions, and linked health records securely."
+            subtitle="Manage EmedsUsers, prescriptions, and linked health records securely."
             registerPath="/mydp/register"
         />
     );

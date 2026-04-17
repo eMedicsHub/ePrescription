@@ -62,7 +62,7 @@ export default function RegisterPage() {
                     fontSize: "0.875rem",
                     marginBottom: "1rem",
                 }}>
-                    Patient accounts can sign in immediately. Doctor and pharmacist accounts require admin approval before login.
+                    EmedsUser accounts can sign in immediately. Doctor and pharmacist accounts require admin approval before login.
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -97,7 +97,7 @@ export default function RegisterPage() {
                         >
                             <option value="DOCTOR">Doctor</option>
                             <option value="PHARMACIST">Pharmacist</option>
-                            <option value="PATIENT">Patient</option>
+                            <option value="PATIENT">EmedsUser</option>
                         </select>
                     </div>
 

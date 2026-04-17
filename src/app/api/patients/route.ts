@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import bcrypt from "bcrypt";
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
@@ -33,7 +34,7 @@ export async function GET(req: Request) {
             doctorAccessCondition = {
                 OR: [
                     { prescriptions: { some: { doctorId: userId } } },
-                    { consents: { some: { doctorId: userId } } }
+                    { consents: { some: { doctorId: userId, status: "ACTIVE" } } }
                 ]
             };
         }
@@ -108,8 +109,9 @@ export async function POST(req: Request) {
             emailValue = `placeholder-${randomSuffix}@eprescribe.local`;
         }
 
-        // Generate random secure password since they aren't logging in immediately
+        // Generate a secure password in case the patient later claims the account.
         const randomPassword = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        const hashedPassword = await bcrypt.hash(randomPassword, 12);
 
         // Transaction to create User, Patient, and Consent together
         const newPatient = await prisma.$transaction(async (tx) => {
@@ -117,7 +119,7 @@ export async function POST(req: Request) {
                 data: {
                     name: name.trim(),
                     email: emailValue.toLowerCase(),
-                    password: randomPassword, // In a real app, you'd hash this, but they won't use it directly here
+                    password: hashedPassword,
                     role: "PATIENT",
                     isApproved: true,
                 }

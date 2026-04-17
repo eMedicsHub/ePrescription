@@ -17,6 +17,7 @@ export async function GET(req: Request) {
         const doctors = await prisma.user.findMany({
             where: {
                 role: "DOCTOR",
+                isApproved: true,
                 OR: [
                     { name: { contains: query, mode: "insensitive" } },
                     { email: { contains: query, mode: "insensitive" } }

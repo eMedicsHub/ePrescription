@@ -96,7 +96,9 @@ function PortalLoginContent({
             });
 
             if (res?.error) {
-                if (res.error === "AccountNotApproved") {
+                if (res.error.startsWith("AccountDenied:")) {
+                    setError(res.error.slice("AccountDenied:".length) || "Your registration was denied.");
+                } else if (res.error === "AccountNotApproved") {
                     setError("Your account is pending admin approval.");
                 } else if (res.error === "UsePortalLogin") {
                     setError("Use the correct portal for this account role.");
@@ -207,7 +209,13 @@ function PortalLoginContent({
                             value={identifier}
                             onChange={(e) => setIdentifier(e.target.value)}
                             required
-                            placeholder={expectedRole === "PATIENT" ? "patient@example.com" : "doctor@example.com"}
+                            placeholder={
+                                expectedRole === "PATIENT"
+                                    ? "emedsuser@example.com"
+                                    : expectedRole === "DOCTOR"
+                                        ? "doctor@example.com"
+                                        : "pharmacist@example.com"
+                            }
                         />
                     </div>
 
@@ -248,7 +256,7 @@ function PortalLoginContent({
                                 className="btn btn-primary"
                                 style={{ marginTop: "0.5rem", background: accentColor, borderColor: accentColor }}
                             >
-                                {loading ? "Signing in…" : "Sign In"}
+                                {loading ? "Signing in..." : "Sign In"}
                             </button>
 
                             

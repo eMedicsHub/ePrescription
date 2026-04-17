@@ -29,7 +29,7 @@ const providers: NextAuthOptions["providers"] = [
             }
 
             const normalizedIdentifier = identifier.toLowerCase();
-            let user: { id: string; email: string; password: string; role: string; isApproved: boolean } | null = null;
+            let user: { id: string; email: string; password: string; role: string; isApproved: boolean; denialReason?: string | null } | null = null;
 
             if (portalRole === "ADMIN" || portalRole === "SUPER_ADMIN") {
                 const dbAdmin = await prisma.admin.findFirst({
@@ -51,7 +51,7 @@ const providers: NextAuthOptions["providers"] = [
                         email: normalizedIdentifier,
                         role: portalRole as Role,
                     },
-                    select: { id: true, email: true, password: true, role: true, isApproved: true },
+                    select: { id: true, email: true, password: true, role: true, isApproved: true, denialReason: true },
                 });
                 if (dbUser) {
                     user = {
@@ -68,7 +68,7 @@ const providers: NextAuthOptions["providers"] = [
                         },
                     },
                     take: 2,
-                    select: { id: true, email: true, password: true, role: true, isApproved: true },
+                    select: { id: true, email: true, password: true, role: true, isApproved: true, denialReason: true },
                 });
 
                 if (matchingUsers.length > 1) {
@@ -88,6 +88,9 @@ const providers: NextAuthOptions["providers"] = [
             }
 
             if (!user.isApproved) {
+                if (user.denialReason) {
+                    throw new Error(`AccountDenied:${user.denialReason}`);
+                }
                 throw new Error("AccountNotApproved");
             }
 
@@ -112,7 +115,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         GoogleProvider({
             ...baseGoogleConfig,
             id: "google-patient",
-            name: "Google (Patient)",
+            name: "Google (EmedsUser)",
         }),
     );
 }

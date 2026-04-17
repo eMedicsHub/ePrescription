@@ -99,7 +99,7 @@ export default function PharmacistDashboardClient() {
                         </div>
 
                         <div style={{ marginBottom: "1.5rem", padding: "1rem", background: "var(--bg-main)", borderRadius: "0.5rem" }}>
-                            <p><strong>Patient:</strong> {prescription.patient.user.name}</p>
+                            <p><strong>EmedsUser:</strong> {prescription.patient.user.name}</p>
                             <p><strong>Doctor:</strong> {prescription.doctor.name}</p>
                             <p><strong>Date:</strong> {new Date(prescription.createdAt).toLocaleDateString()}</p>
                         </div>

@@ -1,5 +1,5 @@
 import { AdminRole } from "@prisma/client";
-import { disconnectSeedDb, upsertAdmin } from "./seed-utils.ts";
+import { disconnectSeedDb, upsertAdmin } from "./seed-utils";
 
 export async function seedAdminUsers() {
   await upsertAdmin({

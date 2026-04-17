@@ -58,69 +58,79 @@ async function resolvePatientForSession(session: any, requestedPatientId?: strin
 }
 
 export async function GET(req: Request) {
-    const session = await getServerSession(authOptions);
+    try {
+        const session = await getServerSession(authOptions);
 
-    if (!session || !["PATIENT", "DOCTOR"].includes((session.user as any).role)) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        if (!session || !["PATIENT", "DOCTOR"].includes((session.user as any).role)) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        if (!(prisma as any).patientRecord) {
+            console.warn("PATIENT_RECORDS_WARN stale Prisma client detected");
+            return NextResponse.json([]);
+        }
+
+        const { searchParams } = new URL(req.url);
+        const category = searchParams.get("category");
+        const patientId = searchParams.get("patientId") || undefined;
+
+        const patient = await resolvePatientForSession(session, patientId);
+        if (!patient) {
+            return NextResponse.json({ error: "Patient not found or unauthorized" }, { status: 404 });
+        }
+
+        const records = await (prisma as any).patientRecord.findMany({
+            where: {
+                patientId: patient.id,
+                ...(category ? { category } : {}),
+            },
+            orderBy: {
+                occurredAt: "desc",
+            },
+            select: {
+                id: true,
+                title: true,
+                description: true,
+                category: true,
+                tags: true,
+                sourcePortal: true,
+                storagePath: true,
+                originalFileName: true,
+                mimeType: true,
+                sizeBytes: true,
+                amount: true,
+                occurredAt: true,
+                createdAt: true,
+                doctor: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
+                createdBy: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        role: true,
+                    },
+                },
+                linkedPrescription: {
+                    select: {
+                        id: true,
+                        status: true,
+                        createdAt: true,
+                    },
+                },
+            },
+        });
+
+        return NextResponse.json(records);
+    } catch (error) {
+        console.error("PATIENT_RECORDS_ERROR", error);
+        return NextResponse.json({ error: "Failed to load records" }, { status: 500 });
     }
-
-    const { searchParams } = new URL(req.url);
-    const category = searchParams.get("category");
-    const patientId = searchParams.get("patientId") || undefined;
-
-    const patient = await resolvePatientForSession(session, patientId);
-    if (!patient) {
-        return NextResponse.json({ error: "Patient not found or unauthorized" }, { status: 404 });
-    }
-
-    const records = await (prisma as any).patientRecord.findMany({
-        where: {
-            patientId: patient.id,
-            ...(category ? { category } : {}),
-        },
-        orderBy: {
-            occurredAt: "desc",
-        },
-        select: {
-            id: true,
-            title: true,
-            description: true,
-            category: true,
-            tags: true,
-            sourcePortal: true,
-            storagePath: true,
-            originalFileName: true,
-            mimeType: true,
-            sizeBytes: true,
-            amount: true,
-            occurredAt: true,
-            createdAt: true,
-            doctor: {
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                },
-            },
-            createdBy: {
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    role: true,
-                },
-            },
-            linkedPrescription: {
-                select: {
-                    id: true,
-                    status: true,
-                    createdAt: true,
-                },
-            },
-        },
-    });
-
-    return NextResponse.json(records);
 }
 
 export async function POST(req: Request) {

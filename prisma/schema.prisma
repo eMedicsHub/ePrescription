@@ -8,7 +8,7 @@ datasource db {
 
 model User {
   id                  String         @id @default(cuid())
-  email               String         @unique
+  email               String
   password            String
   name                String
   role                Role
@@ -17,20 +17,54 @@ model User {
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
   patientProfile      Patient?
+  doctorProfile       Doctor?
+  pharmacistProfile   Pharmacist?
   doctorPrescriptions Prescription[] @relation("DoctorPrescriptions")
   doctorConsents      Consent[]      @relation("DoctorConsents")
+  createdRecords      PatientRecord[] @relation("PatientRecordCreatedBy")
+  doctorRecords       PatientRecord[] @relation("PatientRecordDoctor")
+  accessLogs          AccessLog[]
+
+  @@index([email])
+  @@unique([email, role])
 }
 
 model Patient {
-  id            String         @id @default(cuid())
-  userId        String         @unique
-  universalId   String         @unique
+  id            String          @id @default(cuid())
+  userId        String          @unique
+  universalId   String          @unique
   dob           DateTime
   address       String
   phone         String
-  user          User           @relation(fields: [userId], references: [id])
-  prescriptions Prescription[] @relation("PatientPrescriptions")
-  consents      Consent[]      @relation("PatientConsents")
+  heightCm      Float?
+  weightKg      Float?
+  user          User            @relation(fields: [userId], references: [id])
+  prescriptions Prescription[]  @relation("PatientPrescriptions")
+  consents      Consent[]       @relation("PatientConsents")
+  records       PatientRecord[]
+}
+
+model Doctor {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  licenseNumber   String?
+  specialization  String?
+  hospitalOrgName String?
+  phone           String?
+  user            User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Pharmacist {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  licenseNumber String?
+  pharmacyName  String?
+  phone         String?
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model Prescription {
@@ -45,6 +79,10 @@ model Prescription {
   medications Medication[]
   doctor      User               @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
   patient     Patient            @relation("PatientPrescriptions", fields: [patientId], references: [id])
+  linkedRecords PatientRecord[]
+
+  @@index([patientId])
+  @@index([doctorId])
 }
 
 model Medication {
@@ -55,11 +93,13 @@ model Medication {
   frequency      String
   duration       String
   prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+
+  @@index([prescriptionId])
 }
 
 enum Role {
-  SUPER_ADMIN   // can manage other admins and has all admin privileges
-  ADMIN         // regular administrator, can add medicines
+  SUPER_ADMIN
+  ADMIN
   DOCTOR
   PHARMACIST
   PATIENT
@@ -71,14 +111,14 @@ enum AdminRole {
 }
 
 model Admin {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  password  String
-  name      String
-  role      AdminRole
-  isApproved Boolean  @default(false)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id         String    @id @default(cuid())
+  email      String    @unique
+  password   String
+  name       String
+  role       AdminRole
+  isApproved Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
 
 enum PrescriptionStatus {
@@ -94,15 +134,87 @@ model Medicine {
 }
 
 model Consent {
-  id        String   @id @default(cuid())
-  patientId String
-  doctorId  String
-  createdAt DateTime @default(now())
-  
-  patient   Patient  @relation("PatientConsents", fields: [patientId], references: [id])
-  doctor    User     @relation("DoctorConsents", fields: [doctorId], references: [id])
+  id            String        @id @default(cuid())
+  patientId     String
+  doctorId      String
+  status        ConsentStatus @default(ACTIVE)
+  expiresAt     DateTime?
+  revokedAt     DateTime?
+  revokedReason String?
+  createdAt     DateTime      @default(now())
+
+  patient       Patient       @relation("PatientConsents", fields: [patientId], references: [id])
+  doctor        User          @relation("DoctorConsents", fields: [doctorId], references: [id])
 
   @@unique([patientId, doctorId])
+  @@index([patientId, status])
 }
-// (Duplicate stray block removed)
 
+model PatientRecord {
+  id                   String                    @id
+  patientId            String
+  createdByUserId      String
+  doctorId             String?
+  linkedPrescriptionId String?
+  sourcePortal         PatientRecordSourcePortal
+  category             PatientRecordCategory
+  title                String
+  description          String?
+  tags                 String[]                  @default([])
+  storagePath          String?
+  originalFileName     String?
+  mimeType             String?
+  sizeBytes            Int?
+  checksum             String?
+  amount               Decimal?                  @db.Decimal(10, 2)
+  occurredAt           DateTime                  @default(now())
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  patient              Patient                   @relation(fields: [patientId], references: [id])
+  createdBy            User                      @relation("PatientRecordCreatedBy", fields: [createdByUserId], references: [id])
+  doctor               User?                     @relation("PatientRecordDoctor", fields: [doctorId], references: [id])
+  linkedPrescription   Prescription?             @relation(fields: [linkedPrescriptionId], references: [id])
+  accessLogs           AccessLog[]
+
+  @@index([patientId, occurredAt])
+  @@index([patientId, category, occurredAt])
+}
+
+model AccessLog {
+  id              String        @id @default(cuid())
+  patientRecordId String
+  userId          String?
+  userName        String?
+  accessType      String
+  reason          String?
+  ipAddress       String?
+  userAgent       String?
+  timestamp       DateTime      @default(now())
+  notes           String?
+  patientRecord   PatientRecord @relation(fields: [patientRecordId], references: [id])
+  user            User?         @relation(fields: [userId], references: [id])
+
+  @@index([patientRecordId, timestamp])
+  @@index([userId, timestamp])
+}
+
+enum ConsentStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum PatientRecordCategory {
+  PRESCRIPTION
+  LAB_REPORT
+  IMAGING
+  CONSULTATION_NOTE
+  DISCHARGE_SUMMARY
+  MEDICAL_BILL
+  OTHER
+}
+
+enum PatientRecordSourcePortal {
+  PATIENT
+  DOCTOR
+}

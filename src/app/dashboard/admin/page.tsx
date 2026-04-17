@@ -482,7 +482,7 @@ export default function AdminDashboard() {
                     <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
                         <div>
                             <h2 className="text-xl font-bold text-slate-800">Pending Registrations</h2>
-                            <p className="text-sm text-slate-500 mt-1">Approve newly registered doctors, pharmacists, and patients before they can log in.</p>
+                            <p className="text-sm text-slate-500 mt-1">Approve newly registered doctors, pharmacists, and EmedsUsers before they can log in.</p>
                         </div>
                         <button
                             type="button"

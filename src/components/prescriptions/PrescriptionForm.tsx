@@ -39,8 +39,8 @@ type LlmStatus =
 // Declare SpeechRecognition types
 declare global {
     interface Window {
-        SpeechRecognition: typeof SpeechRecognition;
-        webkitSpeechRecognition: typeof SpeechRecognition;
+        SpeechRecognition: any;
+        webkitSpeechRecognition: any;
     }
 }
 
@@ -80,7 +80,7 @@ export default function PrescriptionForm({ patient, onComplete, initialData }: {
     const [transcript, setTranscript] = useState("");
     const [parsed, setParsed] = useState(false); // true once AI has parsed successfully
     const [llmStatus, setLlmStatus] = useState<LlmStatus>({ state: "idle" });
-    const recognitionRef = useRef<SpeechRecognition | null>(null);
+    const recognitionRef = useRef<any>(null);
 
     // Close autocomplete on outside click
     useEffect(() => {

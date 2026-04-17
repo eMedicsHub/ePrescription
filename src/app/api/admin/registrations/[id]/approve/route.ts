@@ -31,6 +31,7 @@ export async function POST(_: Request, context: RouteContext) {
         },
         data: {
             isApproved: true,
+            denialReason: null,
         },
     });
 

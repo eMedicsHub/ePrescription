@@ -23,11 +23,41 @@ export async function POST(req: Request) {
         }
 
         const existingUser = await prisma.user.findFirst({
-            where: { email: normalizedEmail }
+            where: {
+                email: normalizedEmail,
+                role,
+            }
         });
 
         if (existingUser) {
-            return NextResponse.json({ error: `An account already exists for this ${role.toLowerCase()} account.` }, { status: 400 });
+            if (existingUser.isApproved) {
+                return NextResponse.json({ error: `An account already exists for this ${role.toLowerCase()} portal.` }, { status: 400 });
+            }
+
+            if (!existingUser.denialReason) {
+                return NextResponse.json({ error: "Registration already submitted and pending approval." }, { status: 400 });
+            }
+
+            const hashedPassword = await bcrypt.hash(password, 12);
+            const resubmittedUser = await prisma.user.update({
+                where: { id: existingUser.id },
+                data: {
+                    password: hashedPassword,
+                    name: normalizedName,
+                    denialReason: null,
+                },
+            });
+
+            return NextResponse.json({
+                message: "Registration resubmitted. An admin must approve your account before you can log in.",
+                user: {
+                    id: resubmittedUser.id,
+                    email: resubmittedUser.email,
+                    name: resubmittedUser.name,
+                    role: resubmittedUser.role,
+                    isApproved: resubmittedUser.isApproved,
+                },
+            });
         }
 
         const hashedPassword = await bcrypt.hash(password, 12);

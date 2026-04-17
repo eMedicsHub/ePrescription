@@ -81,7 +81,7 @@ export default function DoctorRegisterPage() {
                 </h1>
 
                 <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", marginBottom: "1.5rem" }}>
-                    Create your {ROLE_LABEL.toLowerCase()} account to manage patients and prescriptions
+                    Create your {ROLE_LABEL.toLowerCase()} account to manage EmedsUsers and prescriptions
                 </p>
 
                 {error && (

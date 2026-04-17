@@ -1,6 +1,6 @@
-import { disconnectSeedDb } from "./seed-utils.ts";
-import { seedAdminUsers } from "./seed-super-admin.ts";
-import { seedMedicines } from "./seed-medicines.ts";
+import { disconnectSeedDb } from "./seed-utils";
+import { seedAdminUsers } from "./seed-super-admin";
+import { seedMedicines } from "./seed-medicines";
 
 async function main() {
   await seedAdminUsers();

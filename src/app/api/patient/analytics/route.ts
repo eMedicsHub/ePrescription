@@ -11,10 +11,30 @@ export async function GET() {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        // In dev, schema changes can leave the global Prisma singleton stale.
+        if (!(prisma as any).patientRecord || !(prisma as any).consent || !(prisma as any).prescription) {
+            console.warn("PATIENT_ANALYTICS_WARN stale Prisma client detected");
+            return NextResponse.json({
+                prescriptionCount: 0,
+                statusCounts: {},
+                categoryCounts: {},
+                totalMedicalBills: 0,
+                activeDoctorCount: 0,
+                expiringSoon: 0,
+            });
+        }
+
         const userId = (session.user as any).id;
         const patient = await prisma.patient.findUnique({ where: { userId } });
         if (!patient) {
-            return NextResponse.json({ error: "Patient not found" }, { status: 404 });
+            return NextResponse.json({
+                prescriptionCount: 0,
+                statusCounts: {},
+                categoryCounts: {},
+                totalMedicalBills: 0,
+                activeDoctorCount: 0,
+                expiringSoon: 0,
+            });
         }
 
         const [prescriptions, records, consents] = await Promise.all([
