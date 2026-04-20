@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PrescriptionPrintView from "./PrescriptionPrintView";
 
 export default function PatientDashboardClient() {
     const [prescriptions, setPrescriptions] = useState<any[]>([]);
@@ -359,12 +360,15 @@ export default function PatientDashboardClient() {
                                 </div>
                             )}
 
-                            <button
-                                className="btn btn-primary mt-4"
-                                onClick={() => setSelectedPrescription(null)}
-                            >
-                                Close
-                            </button>
+                            <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={() => setSelectedPrescription(null)}
+                                >
+                                    Close
+                                </button>
+                                <PrescriptionPrintView prescription={selectedPrescription} />
+                            </div>
                         </div>
                     </div>
                 )}

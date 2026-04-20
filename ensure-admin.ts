@@ -5,15 +5,17 @@ import * as dotenv from 'dotenv'
 
 dotenv.config()
 
+const dbSchema = process.env.DB_SCHEMA || 'public'
+
 const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL,
 })
 
 pool.on('connect', (client) => {
-    client.query('SET search_path TO eprescription')
+    client.query(`SET search_path TO ${dbSchema}`)
 })
 
-const adapter = new PrismaPg(pool, { schema: 'eprescription' })
+const adapter = new PrismaPg(pool, { schema: dbSchema })
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
