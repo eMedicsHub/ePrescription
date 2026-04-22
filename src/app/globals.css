@@ -423,3 +423,57 @@ select:focus {
   color: white;
   box-shadow: var(--shadow-md);
 }
+
+/* Service Navigation */
+.service-nav-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.service-nav {
+  display: inline-flex;
+  background: var(--card-bg);
+  padding: 0.5rem;
+  border-radius: 9999px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.service-nav-btn {
+  position: relative;
+  z-index: 1;
+  padding: 0.75rem 2rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.service-nav-btn:hover {
+  color: var(--primary);
+  background: rgba(2, 132, 199, 0.05);
+}
+
+.service-nav-btn.active {
+  color: white;
+  background: var(--primary);
+  box-shadow: 0 4px 6px -1px rgba(2, 132, 199, 0.3);
+}
+
+/* Enhancing Template Manager to fit full width nicely */
+.template-manager-full {
+  max-width: 900px;
+  margin: 0 auto;
+}

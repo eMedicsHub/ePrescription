@@ -403,7 +403,7 @@ If the doctor mentions multiple medications, include one object per medication.`
                         /* ---- Dictation controls (hidden once parsed) ---- */
                         <>
                             <p style={{ fontSize: "0.875rem", color: "var(--text-muted)", marginBottom: "1rem" }}>
-                                Dictate the prescription, edit if needed, then click <strong>Parse with AI</strong>.
+                                Dictate the prescription, edit if needed, then click <strong>Generate Prescription</strong>.
                             </p>
 
                             {/* Record button */}
@@ -467,7 +467,7 @@ If the doctor mentions multiple medications, include one object per medication.`
                                     className="btn btn-blue btn-sm"
                                 >
                                     <Sparkles className="w-4 h-4" />
-                                    Parse with AI
+                                    Generate Prescription
                                 </button>
                                 <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
                                     Runs locally — no data leaves your machine
