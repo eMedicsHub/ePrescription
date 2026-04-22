@@ -16,8 +16,9 @@ model User {
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
   patientProfile      Patient?
-  doctorPrescriptions Prescription[] @relation("DoctorPrescriptions")
-  doctorConsents      Consent[]      @relation("DoctorConsents")
+  doctorPrescriptions Prescription[]       @relation("DoctorPrescriptions")
+  doctorConsents      Consent[]            @relation("DoctorConsents")
+  doctorTemplates     PrescriptionTemplate[] @relation("DoctorTemplates")
 }
 
 model Patient {
@@ -86,4 +87,24 @@ model Consent {
   doctor    User     @relation("DoctorConsents", fields: [doctorId], references: [id])
 
   @@unique([patientId, doctorId])
+}
+
+model PrescriptionTemplate {
+  id          String               @id @default(cuid())
+  name        String
+  doctorId    String
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  doctor      User                 @relation("DoctorTemplates", fields: [doctorId], references: [id])
+  medications TemplateMedication[]
+}
+
+model TemplateMedication {
+  id         String               @id @default(cuid())
+  templateId String
+  name       String
+  dosage     String
+  frequency  String
+  duration   String
+  template   PrescriptionTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 }
