@@ -74,6 +74,9 @@ export default function DoctorDashboardClient() {
                                         {selectedPatient.user.name}
                                     </span>
                                     <span style={{ fontSize: "1.2rem", fontWeight: "normal", color: "var(--text-muted)" }}>
+                                        (ID: {selectedPatient.universalId})
+                                    </span>
+                                    <span style={{ fontSize: "1.2rem", fontWeight: "normal", color: "var(--text-muted)", marginLeft: "0.5rem" }}>
                                         (DOB: {new Date(selectedPatient.dob).toLocaleDateString()})
                                     </span>
                                 </h2>

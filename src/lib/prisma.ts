@@ -3,16 +3,17 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
 
 const prismaClientSingleton = () => {
+    const dbSchema = process.env.DB_SCHEMA || 'public'
     const pool = new pg.Pool({
         connectionString: process.env.DATABASE_URL,
     })
-    // Add a listener to set the search path for every new client in the pool
+
     pool.on('connect', (client) => {
-        client.query('SET search_path TO eprescription')
+        client.query(`SET search_path TO ${dbSchema}`)
     })
-    const adapter = new PrismaPg(pool, { schema: 'eprescription' })
+
+    const adapter = new PrismaPg(pool, { schema: dbSchema })
     const client = new PrismaClient({ adapter })
-    console.log("Prisma Models:", Object.keys(client).filter(k => !k.startsWith('_') && !k.startsWith('$')))
     return client
 }
 

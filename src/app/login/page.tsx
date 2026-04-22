@@ -1,16 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function LoginPage() {
-    const [email, setEmail] = useState("");
+function LoginPageContent() {
+    const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [notice, setNotice] = useState("");
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const registered = searchParams.get("registered");
+
+        if (registered === "true") {
+            setNotice("Registration successful. You can now sign in.");
+        }
+    }, [searchParams]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -19,7 +29,7 @@ export default function LoginPage() {
 
         try {
             const res = await signIn("credentials", {
-                email,
+                identifier,
                 password,
                 redirect: false,
             });
@@ -33,6 +43,17 @@ export default function LoginPage() {
         } catch {
             setError("An unexpected error occurred");
         } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
+        setLoading(true);
+        setError("");
+        try {
+            await signIn("google", { callbackUrl: "/dashboard" });
+        } catch {
+            setError("Google sign-in failed");
             setLoading(false);
         }
     };
@@ -83,14 +104,29 @@ export default function LoginPage() {
                     </div>
                 )}
 
+                {notice && (
+                    <div style={{
+                        background: "#ecfdf5",
+                        border: "1px solid #a7f3d0",
+                        color: "#065f46",
+                        borderRadius: "0.5rem",
+                        padding: "0.625rem 0.875rem",
+                        fontSize: "0.875rem",
+                        fontWeight: 500,
+                        marginBottom: "1rem",
+                    }}>
+                        {notice}
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit}>
                     <div className="input-group">
                         <label htmlFor="login-email">Email or Username</label>
                         <input
                             id="login-email"
                             type="text"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            value={identifier}
+                            onChange={(e) => setIdentifier(e.target.value)}
                             required
                             placeholder="doctor@example.com"
                         />
@@ -118,6 +154,16 @@ export default function LoginPage() {
                     </button>
                 </form>
 
+                <button
+                    type="button"
+                    disabled={loading}
+                    onClick={handleGoogleSignIn}
+                    className="btn"
+                    style={{ marginTop: "0.75rem", width: "100%" }}
+                >
+                    Continue with Google
+                </button>
+
                 <p style={{
                     textAlign: "center",
                     marginTop: "1.5rem",
@@ -141,5 +187,13 @@ export default function LoginPage() {
                 Secure platform for healthcare professionals to manage digital prescriptions.
             </p>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={null}>
+            <LoginPageContent />
+        </Suspense>
     );
 }

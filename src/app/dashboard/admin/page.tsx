@@ -1,11 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { addMedicine } from '@/lib/actions/medicineActions'
 import { createAdminUser } from '@/lib/actions/adminActions'
 import { useSession } from 'next-auth/react'
 import Navbar from '@/components/Navbar'
 import { Pill, PlusCircle, UserPlus, Mail, Lock, User, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react'
+
+type PendingRegistration = {
+    id: string
+    name: string
+    email: string
+    role: 'DOCTOR' | 'PHARMACIST' | 'PATIENT'
+    createdAt: string
+}
 
 export default function AdminDashboard() {
     const [name, setName] = useState('')
@@ -18,9 +26,42 @@ export default function AdminDashboard() {
     const [adminPassword, setAdminPassword] = useState('')
     const [adminMessage, setAdminMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
     const [adminSubmitting, setAdminSubmitting] = useState(false)
+    const [pendingRegistrations, setPendingRegistrations] = useState<PendingRegistration[]>([])
+    const [pendingLoading, setPendingLoading] = useState(true)
+    const [pendingError, setPendingError] = useState<string | null>(null)
+    const [approvingId, setApprovingId] = useState<string | null>(null)
 
     const { data: session } = useSession()
     const role = (session?.user as any)?.role
+
+    async function loadPendingRegistrations() {
+        setPendingLoading(true)
+        setPendingError(null)
+
+        try {
+            const response = await fetch('/api/admin/registrations', { cache: 'no-store' })
+            const data = await response.json()
+
+            if (!response.ok) {
+                setPendingError(data.error || 'Failed to load pending registrations')
+                setPendingRegistrations([])
+                return
+            }
+
+            setPendingRegistrations(data.registrations || [])
+        } catch {
+            setPendingError('Failed to load pending registrations')
+            setPendingRegistrations([])
+        } finally {
+            setPendingLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+            loadPendingRegistrations()
+        }
+    }, [role])
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
@@ -62,6 +103,29 @@ export default function AdminDashboard() {
         }
 
         setAdminSubmitting(false)
+    }
+
+    async function handleApproveRegistration(userId: string) {
+        setApprovingId(userId)
+        setPendingError(null)
+
+        try {
+            const response = await fetch(`/api/admin/registrations/${userId}/approve`, {
+                method: 'POST',
+            })
+
+            const data = await response.json()
+            if (!response.ok) {
+                setPendingError(data.error || 'Failed to approve registration')
+                return
+            }
+
+            setPendingRegistrations((current) => current.filter((registration) => registration.id !== userId))
+        } catch {
+            setPendingError('Failed to approve registration')
+        } finally {
+            setApprovingId(null)
+        }
     }
 
     return (
@@ -269,6 +333,62 @@ export default function AdminDashboard() {
                         </div>
                     )}
                 </div>
+
+                <section className="mt-8 bg-white shadow-xl shadow-slate-200/50 rounded-2xl p-8 border border-slate-100">
+                    <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800">Pending Registrations</h2>
+                            <p className="text-sm text-slate-500 mt-1">Approve newly registered doctors, pharmacists, and patients before they can log in.</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={loadPendingRegistrations}
+                            className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition-colors"
+                            disabled={pendingLoading}
+                        >
+                            Refresh
+                        </button>
+                    </div>
+
+                    {pendingError && (
+                        <div className="mb-4 p-4 flex items-start gap-3 rounded-xl text-sm font-medium bg-rose-50 text-rose-800 border border-rose-200/50">
+                            <AlertCircle className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" />
+                            <p>{pendingError}</p>
+                        </div>
+                    )}
+
+                    {pendingLoading ? (
+                        <div className="py-10 text-center text-slate-500">Loading pending registrations…</div>
+                    ) : pendingRegistrations.length === 0 ? (
+                        <div className="py-10 text-center text-slate-500">No registrations are waiting for approval.</div>
+                    ) : (
+                        <div className="space-y-4">
+                            {pendingRegistrations.map((registration) => (
+                                <div key={registration.id} className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-5 rounded-2xl border border-slate-200 bg-slate-50/60">
+                                    <div>
+                                        <h3 className="text-base font-semibold text-slate-900">{registration.name}</h3>
+                                        <p className="text-sm text-slate-600">{registration.email}</p>
+                                        <p className="text-sm text-slate-500 mt-1">
+                                            {registration.role} • Registered {new Date(registration.createdAt).toLocaleString()}
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleApproveRegistration(registration.id)}
+                                        disabled={approvingId === registration.id}
+                                        className={`px-5 py-3 rounded-xl font-semibold text-white transition-all ${approvingId === registration.id
+                                            ? 'bg-slate-400 cursor-not-allowed'
+                                            : 'bg-emerald-600 hover:bg-emerald-700'
+                                            }`}
+                                    >
+                                        {approvingId === registration.id ? 'Approving…' : 'Approve Account'}
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
             </main>
         </div>
     )

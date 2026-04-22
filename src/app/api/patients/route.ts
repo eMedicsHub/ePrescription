@@ -23,6 +23,7 @@ export async function GET(req: Request) {
             OR: [
                 { user: { name: { contains: query, mode: "insensitive" as const } } },
                 { user: { email: { contains: query, mode: "insensitive" as const } } },
+                { universalId: { contains: query, mode: "insensitive" as const } },
                 { phone: { contains: query } }
             ]
         };
@@ -115,6 +116,7 @@ export async function POST(req: Request) {
                     email: emailValue,
                     password: randomPassword, // In a real app, you'd hash this, but they won't use it directly here
                     role: "PATIENT",
+                    isApproved: true,
                 }
             });
 
@@ -136,6 +138,7 @@ export async function POST(req: Request) {
 
             return {
                 id: patient.id,
+                universalId: patient.universalId,
                 userId: user.id,
                 dob: patient.dob,
                 phone: patient.phone,

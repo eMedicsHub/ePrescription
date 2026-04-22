@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -40,6 +41,17 @@ export default function RegisterPage() {
         }
     };
 
+    const handleGoogleSignIn = async () => {
+        setLoading(true);
+        setError("");
+        try {
+            await signIn("google", { callbackUrl: "/dashboard" });
+        } catch {
+            setError("Google sign-in failed");
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="auth-container">
             <div className="card">
@@ -47,6 +59,18 @@ export default function RegisterPage() {
                 <h2 className="text-center">Create an account</h2>
 
                 {error && <div className="error-message">{error}</div>}
+
+                <div style={{
+                    background: "#eff6ff",
+                    border: "1px solid #bfdbfe",
+                    color: "#1d4ed8",
+                    borderRadius: "0.75rem",
+                    padding: "0.875rem 1rem",
+                    fontSize: "0.875rem",
+                    marginBottom: "1rem",
+                }}>
+                    New accounts can sign in immediately after registration.
+                </div>
 
                 <form onSubmit={handleSubmit}>
                     <div className="input-group">
@@ -99,6 +123,16 @@ export default function RegisterPage() {
                         {loading ? "Creating account..." : "Register"}
                     </button>
                 </form>
+
+                <button
+                    type="button"
+                    className="btn"
+                    style={{ marginTop: "0.75rem", width: "100%" }}
+                    disabled={loading}
+                    onClick={handleGoogleSignIn}
+                >
+                    Register with Google
+                </button>
 
                 <p className="text-center mt-4 text-sm">
                     Already have an account? <Link href="/login" className="link">Login here</Link>

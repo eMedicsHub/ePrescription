@@ -1,61 +1,32 @@
-import { PrismaClient, Role } from '@prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
-import pg from 'pg'
-import * as dotenv from 'dotenv'
-import bcrypt from 'bcrypt'
+import { Role } from "@prisma/client";
+import { disconnectSeedDb, upsertUser } from "./prisma/seed-utils.ts";
 
-dotenv.config()
+export async function seedAdminUsers() {
+  await upsertUser({
+    email: process.env.SUPER_ADMIN_EMAIL ?? "admin",
+    name: process.env.SUPER_ADMIN_NAME ?? "Super Admin",
+    rawPassword: process.env.SUPER_ADMIN_PASSWORD ?? "admin",
+    role: Role.SUPER_ADMIN,
+  });
 
-const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
-})
+  await upsertUser({
+    email: process.env.ADMIN_EMAIL ?? "admin@example.com",
+    name: process.env.ADMIN_NAME ?? "Admin User",
+    rawPassword: process.env.ADMIN_PASSWORD ?? "admin123",
+    role: Role.ADMIN,
+  });
 
-pool.on('connect', (client) => {
-    client.query('SET search_path TO eprescription')
-})
-
-const adapter = new PrismaPg(pool, { schema: 'eprescription' })
-const prisma = new PrismaClient({ adapter })
-
-async function main() {
-    const email = 'admin'
-    const name = 'Super Admin'
-    const password = await bcrypt.hash('admin', 10)
-
-    // Check if user exists first
-    const existingUser = await prisma.user.findUnique({
-        where: { email }
-    })
-
-    if (existingUser) {
-        console.log('Super Admin user already exists:', existingUser.email)
-        // Ensure role and password are correct
-        const admin = await prisma.user.update({
-            where: { email },
-            data: { role: Role.SUPER_ADMIN, password },
-        })
-        console.log('User guaranteed to be SUPER_ADMIN:', admin.email)
-    } else {
-        const admin = await prisma.user.create({
-            data: {
-                email,
-                name,
-                password,
-                role: Role.SUPER_ADMIN,
-            },
-        })
-        console.log('Super Admin user created:', admin.email)
-    }
+  console.log("Seeded admin users (SUPER_ADMIN + ADMIN)");
 }
 
-main()
+if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, "/")}`) {
+  seedAdminUsers()
     .then(async () => {
-        await prisma.$disconnect()
-        pool.end()
+      await disconnectSeedDb();
     })
-    .catch(async (e) => {
-        console.error(e)
-        await prisma.$disconnect()
-        pool.end()
-        process.exit(1)
-    })
+    .catch(async (error) => {
+      console.error("Admin user seed failed:", error);
+      await disconnectSeedDb();
+      process.exit(1);
+    });
+}

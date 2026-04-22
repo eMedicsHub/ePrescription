@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PrescriptionPrintView from "./PrescriptionPrintView";
 
 export default function PastPrescriptions({
     patientId,
@@ -135,7 +136,7 @@ export default function PastPrescriptions({
                                 <strong>Doctor:</strong> {p.doctor.name}
                             </div>
 
-                            <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem", justifyContent: "flex-end" }}>
+                            <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap" }}>
                                 {onClone && (
                                     <button
                                         className="btn btn-primary"
@@ -145,6 +146,10 @@ export default function PastPrescriptions({
                                         Clone / Repeat
                                     </button>
                                 )}
+                                {/* Stop propagation so clicking Print doesn't open the modal */}
+                                <span onClick={(e) => e.stopPropagation()}>
+                                    <PrescriptionPrintView prescription={p} />
+                                </span>
                                 {onCancel && p.status === 'PENDING' && (
                                     <button
                                         className="btn-logout"
@@ -156,6 +161,7 @@ export default function PastPrescriptions({
                                     </button>
                                 )}
                             </div>
+
                         </div>
                     ))}
                 </div>
@@ -221,7 +227,7 @@ export default function PastPrescriptions({
                             </div>
                         )}
 
-                        <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
+                        <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.5rem", flexWrap: "wrap", alignItems: "center" }}>
                             <button
                                 className="btn btn-primary"
                                 onClick={() => setSelectedPrescription(null)}
@@ -236,6 +242,7 @@ export default function PastPrescriptions({
                                     Clone / Repeat
                                 </button>
                             )}
+                            <PrescriptionPrintView prescription={selectedPrescription} />
                             {onCancel && selectedPrescription.status === 'PENDING' && (
                                 <button
                                     className="btn-logout"

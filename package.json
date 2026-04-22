@@ -6,7 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:generate": "npx prisma generate",
+    "db:migrate:dev": "npx prisma migrate dev",
+    "db:migrate:deploy": "npx prisma migrate deploy",
+    "db:migrate:reset": "npx prisma migrate reset",
+    "db:seed": "node prisma/seed.ts",
+    "db:setup": "npm run db:migrate:deploy && npm run db:seed",
+    "postinstall": "npx prisma generate"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.ts"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "^0.2.82",
